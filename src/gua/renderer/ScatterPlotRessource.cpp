@@ -118,19 +118,19 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
   // {
     data[0].pos = scm::math::vec3(0.0f, 0.0f, 0.0f);
     data[0].tex = scm::math::vec2(0.f, 0.f);
-    data[0].normal = scm::math::vec3(0.f, 0.f, 0.f);
+    data[0].normal = scm::math::vec3(0.f, 0.f, 1.f);
     data[0].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[0].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
     data[1].pos = scm::math::vec3(1.0f, 0.0f, 0.0f);
-    data[1].tex = scm::math::vec2(0.f, 0.f);
-    data[1].normal = scm::math::vec3(0.f, 0.f, 0.f);
+    data[1].tex = scm::math::vec2(1.f, 0.f);
+    data[1].normal = scm::math::vec3(0.f, 0.f, 1.f);
     data[1].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[1].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
     data[2].pos = scm::math::vec3(0.0f, 1.0f, 0.0f);
-    data[2].tex = scm::math::vec2(0.f, 0.f);
-    data[2].normal = scm::math::vec3(0.f, 0.f, 0.f);
+    data[2].tex = scm::math::vec2(0.f, 1.f);
+    data[2].normal = scm::math::vec3(0.f, 0.f, 1.f);
     data[2].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[2].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
@@ -179,7 +179,7 @@ void ScatterPlotRessource::draw(RenderContext const& ctx) const {
   scm::gl::context_vertex_input_guard vig(ctx.render_context);
 
   ctx.render_context->bind_vertex_array(vertex_array_[ctx.id]);
-  ctx.render_context->bind_index_buffer(indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_STRIP, scm::gl::TYPE_UINT);
+  ctx.render_context->bind_index_buffer(indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
 
   ctx.render_context->apply();
   ctx.render_context->draw_elements(3);
