@@ -19,8 +19,8 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef GUA_SCATTER_PLOT_NODE_HPP
-#define GUA_SCATTER_PLOT_NODE_HPP
+#ifndef GUA_CONE_TREE_NODE_HPP
+#define GUA_CONE_TREE_NODE_HPP
 
 // guacamole headers
 #include <gua/scenegraph/GeometryNode.hpp>
@@ -32,10 +32,10 @@ namespace gua {
  *
  * \ingroup gua_scenegraph
  */
-class GUA_DLL ScatterPlotNode : public GeometryNode {
+class GUA_DLL ConeTreeNode : public GeometryNode {
  public:  // member
 
-  ScatterPlotNode(std::string const& name,
+  ConeTreeNode(std::string const& name,
                   std::string const& geometry = "gua_default_geometry",
                   std::string const& material = "gua_default_material",
                   math::mat4 const& transform = math::mat4::identity());
@@ -60,4 +60,4 @@ class GUA_DLL ScatterPlotNode : public GeometryNode {
 
 }
 
-#endif  // GUA_SCATTER_PLOT_NODE_HPP
+#endif  // GUA_CONE_TREE_NODE_HPP

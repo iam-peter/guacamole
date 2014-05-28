@@ -20,19 +20,19 @@
  ******************************************************************************/
 
 // class header
-#include <gua/scenegraph/ScatterPlotNode.hpp>
+#include <gua/scenegraph/ConeTreeNode.hpp>
 
 #include <gua/databases/GeometryDatabase.hpp>
 #include <gua/databases/MaterialDatabase.hpp>
 #include <gua/scenegraph/RayNode.hpp>
-#include <gua/renderer/ScatterPlotLoader.hpp>
+#include <gua/renderer/ConeTreeLoader.hpp>
 
 // guacamole headers
 
 namespace gua {
 
   ////////////////////////////////////////////////////////////////////////////////
-  ScatterPlotNode::ScatterPlotNode(std::string const& name,
+  ConeTreeNode::ConeTreeNode(std::string const& name,
                                    std::string const& filename,
                                    std::string const& material,
                                    math::mat4 const& transform)
@@ -41,7 +41,7 @@ namespace gua {
 
   ////////////////////////////////////////////////////////////////////////////////
 
-  void ScatterPlotNode::ray_test_impl(RayNode const& ray, PickResult::Options options,
+  void ConeTreeNode::ray_test_impl(RayNode const& ray, PickResult::Options options,
     Mask const& mask, std::set<PickResult>& hits) {
 
     // first of all, check bbox
@@ -168,7 +168,7 @@ namespace gua {
 
   ////////////////////////////////////////////////////////////////////////////////
 
-  void ScatterPlotNode::update_cache() {
+  void ConeTreeNode::update_cache() {
 
     // The code below auto-loads a geometry if it's not already supported by
     // the GeometryDatabase. It expects a geometry name like
@@ -198,7 +198,7 @@ namespace gua {
                 std::stringstream sstr(flags_string);
                 sstr >> flags;
 
-                ScatterPlotLoader loader;
+                ConeTreeLoader loader;
                 //loader.load_geometry(filename, flags);
 
               }
@@ -242,7 +242,7 @@ namespace gua {
 
   ////////////////////////////////////////////////////////////////////////////////
 
-  std::shared_ptr<Node> ScatterPlotNode::copy() const {
-    return std::make_shared<ScatterPlotNode>(get_name(), filename_, material_, get_transform());
+  std::shared_ptr<Node> ConeTreeNode::copy() const {
+    return std::make_shared<ConeTreeNode>(get_name(), filename_, material_, get_transform());
   }
 }
