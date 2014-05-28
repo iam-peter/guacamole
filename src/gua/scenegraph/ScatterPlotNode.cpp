@@ -199,7 +199,7 @@ namespace gua {
                 sstr >> flags;
 
                 ScatterPlotLoader loader;
-                loader.load_geometry(filename, flags);
+                //loader.load_geometry(filename, flags);
 
               }
               else {

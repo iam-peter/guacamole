@@ -31,18 +31,6 @@
 #include <list>
 #include <memory>
 
-#if ASSIMP_VERSION == 3
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
-#else
-#include <assimp/assimp.hpp>
-#include <assimp/aiPostProcess.h>
-#include <assimp/aiScene.h>
-#endif
-
-namespace Assimp { class Importer; }
-
 namespace gua {
 
 class Node;
@@ -57,16 +45,6 @@ class GeometryNode;
  */
 class GUA_DLL ScatterPlotLoader : public GeometryLoader {
 
- public: // typedefs, enums
-
-   enum Flags {
-     DEFAULTS = 0,
-     LOAD_MATERIALS = 1 << 0,
-     OPTIMIZE_GEOMETRY = 1 << 1,
-     MAKE_PICKABLE = 1 << 2,
-     NORMALIZE_POSITION = 1 << 3,
-     NORMALIZE_SCALE = 1 << 4
-   };
 
 public:
 
@@ -78,40 +56,10 @@ public:
    ScatterPlotLoader();
 
    /**
-   * 
+   *
    */
-   std::shared_ptr<Node> load_geometry(std::string const& file_name, unsigned flags = DEFAULTS);
+   std::shared_ptr<Node> create();
 
-   /**
-   *
-   */
-   std::shared_ptr<Node> create_geometry_from_file(std::string const& node_name,
-                                                   std::string const& file_name,
-                                                   std::string const& fallback_material,
-                                                   unsigned flags = DEFAULTS);
-
-  /**
-   * Constructor from a file.
-   *
-   * Creates a new MeshLoader from a given file.
-   *
-   * \param file_name        The file to load the meshs data from.
-   * \param material_name    The material name that was set to the parent node
-   */
-  std::shared_ptr<Node> load(std::string const& file_name,
-                             unsigned flags);
-
-  /**
-   * Constructor from memory buffer.
-   *
-   * Creates a new MeshLoader from a existing memory buffer.
-   *
-   * \param buffer_name      The buffer to load the meh's data from.
-   * \param buffer_size      The buffer's size.
-   */
-  std::vector<ScatterPlotRessource*> const load_from_buffer(char const* buffer_name,
-                                                            unsigned buffer_size,
-                                                            bool build_kd_tree);
   /**
   *
   */
@@ -119,22 +67,12 @@ public:
 
  private: // methods
 
-  std::shared_ptr<Node> get_tree(std::shared_ptr<Assimp::Importer> const& importer,
+  /*std::shared_ptr<Node> get_tree(std::shared_ptr<Assimp::Importer> const& importer,
                                  aiScene const* ai_scene,
                                  aiNode* ai_root,
                                  std::string const& file_name,
-                                 unsigned flags, unsigned& mesh_count);
+                                 unsigned flags, unsigned& mesh_count);*/
 
-  void apply_fallback_material(std::shared_ptr<Node> const& root, std::string const& fallback_material) const;
-
-private: // attributes
-
-  std::string parent_material_name_;
-
-  unsigned node_counter_;
-
-  static std::unordered_map<std::string, std::shared_ptr<Node>> loaded_files_;
-  static unsigned mesh_counter_;
 };
 
 }
