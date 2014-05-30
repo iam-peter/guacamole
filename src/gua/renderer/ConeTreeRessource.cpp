@@ -53,7 +53,12 @@ namespace gua {
 ////////////////////////////////////////////////////////////////////////////////
 
 ConeTreeRessource::ConeTreeRessource()
-    : vertices_(), indices_(), vertex_array_(), upload_mutex_(), mesh_(nullptr) {}
+    : vertices_(), indices_(), vertex_array_(), upload_mutex_(), mesh_(nullptr) 
+    {
+      Logger::LOG_WARNING << "DEFAULT_CONSTRUCTOR" << std::endl;
+      bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(-1,-1,-1),
+                                                  scm::math::vec3(1,1,1));
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -67,12 +72,8 @@ ConeTreeRessource::ConeTreeRessource(aiMesh* mesh, std::shared_ptr<Assimp::Impor
       importer_(importer) {
 
   if (mesh_->HasPositions()) {
-    bounding_box_ = math::BoundingBox<math::vec3>();
-
-    for (unsigned v(0); v < mesh_->mNumVertices; ++v) {
-      bounding_box_.expandBy(scm::math::vec3(
-          mesh_->mVertices[v].x, mesh_->mVertices[v].y, mesh_->mVertices[v].z));
-    }
+    bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(-1,-1,-1),
+                                                  scm::math::vec3(1,1,1));
 
     if (build_kd_tree) {
       kd_tree_.generate(mesh_);
@@ -85,7 +86,8 @@ ConeTreeRessource::ConeTreeRessource(aiMesh* mesh, std::shared_ptr<Assimp::Impor
 void ConeTreeRessource::upload_to(RenderContext const& ctx) const
 {
 
-  
+  Logger::LOG_WARNING << "UPLOAD_TO" << std::endl;
+
   if (!mesh_->HasPositions()) {
     Logger::LOG_WARNING << "Unable to load Mesh! Has no vertex data." << std::endl;
     return;
@@ -170,6 +172,8 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
 
 void ConeTreeRessource::draw(RenderContext const& ctx) const {
 
+  Logger::LOG_WARNING << "DRAW" << std::endl;
+  
   // upload to GPU if neccessary
   if (vertices_.size() <= ctx.id || vertices_[ctx.id] == nullptr)
   {

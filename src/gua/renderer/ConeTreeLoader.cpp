@@ -50,19 +50,26 @@ ConeTreeLoader::ConeTreeLoader()
 
 std::shared_ptr<Node> ConeTreeLoader::create() 
 {
+  Logger::LOG_WARNING << "CREATE" << std::endl;
+
   // TODO set meaningful name
-  std::string name = "instance_name";
-
+  std::string name = "instance_name123";
   GeometryDatabase::instance()->add(name, std::make_shared<ConeTreeRessource>());
-  return std::make_shared<TransformNode>(name);
+  
+  auto node = std::make_shared<ConeTreeNode>(name,"data/objects/teapot.obj","data/materials/Red.gmd");
+  //node->set_material("data/materials/Red.gmd");
+  
+  return node;
 }
-
 ////////////////////////////////////////////////////////////////////////////////
 
 bool ConeTreeLoader::is_supported(std::string const& file_name) const {
-  return false;
+  Logger::LOG_WARNING << "is_supported" << std::endl;
+  
+  return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 /*
 std::shared_ptr<Node> ConeTreeLoader::get_tree(std::shared_ptr<Assimp::Importer> const& importer,
