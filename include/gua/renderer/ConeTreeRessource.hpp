@@ -69,7 +69,7 @@ class ConeTreeRessource : public GeometryRessource {
    *
    * \param mesh             The Assimp mesh to load the data from.
    */
-   ConeTreeRessource(aiMesh* mesh, std::shared_ptr<Assimp::Importer> const& importer, bool build_kd_tree);
+   //ConeTreeRessource(aiMesh* mesh, std::shared_ptr<Assimp::Importer> const& importer, bool build_kd_tree);
 
   /**
    * Draws the Mesh.

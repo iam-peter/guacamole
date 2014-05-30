@@ -48,7 +48,7 @@ ConeTreeLoader::ConeTreeLoader()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<Node> ConeTreeLoader::create() 
+/*std::shared_ptr<Node> ConeTreeLoader::create() 
 {
   Logger::LOG_WARNING << "CREATE" << std::endl;
 
@@ -60,11 +60,20 @@ std::shared_ptr<Node> ConeTreeLoader::create()
   //node->set_material("data/materials/Red.gmd");
   
   return node;
+}*/
+
+std::shared_ptr<Node> ConeTreeLoader::create(std::string const& node_name,
+                                                std::string const& material)
+{
+
+  GeometryDatabase::instance()->add(node_name, std::make_shared<ConeTreeRessource>());
+
+  return std::make_shared<ConeTreeNode>(node_name, node_name, material);
+  
 }
 ////////////////////////////////////////////////////////////////////////////////
 
 bool ConeTreeLoader::is_supported(std::string const& file_name) const {
-  Logger::LOG_WARNING << "is_supported" << std::endl;
   
   return true;
 }

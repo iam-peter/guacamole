@@ -174,7 +174,7 @@ namespace gua {
     // the GeometryDatabase. It expects a geometry name like
     //
     // "type='file'&file='data/objects/monkey.obj'&id=0&flags=0"
-
+    /*
     if (filename_changed_) 
     {
       if (filename_ != "") 
@@ -218,7 +218,7 @@ namespace gua {
 
       filename_changed_ = false;
     }
-
+*/
     // The code below auto-loads a material if it's not already supported by
     // the MaterialDatabase. It expects a material name like
     //

@@ -55,14 +55,13 @@ namespace gua {
 ConeTreeRessource::ConeTreeRessource()
     : vertices_(), indices_(), vertex_array_(), upload_mutex_(), mesh_(nullptr) 
     {
-      Logger::LOG_WARNING << "DEFAULT_CONSTRUCTOR" << std::endl;
-      bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(-1,-1,-1),
-                                                  scm::math::vec3(1,1,1));
+      bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(-2,-2,-2),
+                                                  scm::math::vec3(2,2,2));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ConeTreeRessource::ConeTreeRessource(aiMesh* mesh, std::shared_ptr<Assimp::Importer> const& importer,
+/*ConeTreeRessource::ConeTreeRessource(aiMesh* mesh, std::shared_ptr<Assimp::Importer> const& importer,
            bool build_kd_tree)
     : vertices_(),
       indices_(),
@@ -79,19 +78,18 @@ ConeTreeRessource::ConeTreeRessource(aiMesh* mesh, std::shared_ptr<Assimp::Impor
       kd_tree_.generate(mesh_);
     }
   }
-}
+}*/
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void ConeTreeRessource::upload_to(RenderContext const& ctx) const
 {
 
-  Logger::LOG_WARNING << "UPLOAD_TO" << std::endl;
 
-  if (!mesh_->HasPositions()) {
+  /*if (!mesh_->HasPositions()) {
     Logger::LOG_WARNING << "Unable to load Mesh! Has no vertex data." << std::endl;
     return;
-  }
+  }*/
 
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
@@ -124,13 +122,13 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
     data[0].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[0].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
-    data[1].pos = scm::math::vec3(1.0f, 0.0f, 0.0f);
+    data[1].pos = scm::math::vec3(0.5f, 0.0f, 0.0f);
     data[1].tex = scm::math::vec2(1.f, 0.f);
     data[1].normal = scm::math::vec3(0.f, 0.f, 1.f);
     data[1].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[1].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
-    data[2].pos = scm::math::vec3(0.0f, 1.0f, 0.0f);
+    data[2].pos = scm::math::vec3(0.0f, 0.5f, 0.0f);
     data[2].tex = scm::math::vec2(0.f, 1.f);
     data[2].normal = scm::math::vec3(0.f, 0.f, 1.f);
     data[2].tangent = scm::math::vec3(0.f, 0.f, 0.f);
@@ -165,15 +163,12 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
                              0, 3, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
                              0, 4, scm::gl::TYPE_VEC3F, sizeof(Vertex)),
                              buffer_arrays);
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void ConeTreeRessource::draw(RenderContext const& ctx) const {
 
-  Logger::LOG_WARNING << "DRAW" << std::endl;
-  
   // upload to GPU if neccessary
   if (vertices_.size() <= ctx.id || vertices_[ctx.id] == nullptr)
   {

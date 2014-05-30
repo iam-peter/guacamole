@@ -58,7 +58,7 @@ public:
    /**
    *
    */
-   std::shared_ptr<Node> create();
+   std::shared_ptr<Node> create(std::string const& node_name, std::string const& material);
 
   /**
   *
