@@ -28,6 +28,8 @@
 #include <gua/renderer/ShaderProgram.hpp>
 #include <gua/utils/Logger.hpp>
 
+ #include <queue>
+
 
 namespace {
 struct Vertex {
@@ -44,8 +46,20 @@ namespace gua {
 ////////////////////////////////////////////////////////////////////////////////
 
 ConeTreeRessource::ConeTreeRessource(CTNode const& root)
-    : vertices_(), indices_(), vertex_array_(), upload_mutex_(), cone_tree_root_(root) 
+    : vertices_(), indices_(), vertex_array_(), upload_mutex_(), cone_tree_root_(root), num_nodes_(1) 
     {
+
+      // traverse the tree and count the number of nodes
+      std::queue<CTNode> queue;
+      queue.push(cone_tree_root_);
+      while (!queue.empty())
+      {
+        num_nodes_ += queue.front().children.size();
+        for (unsigned int i(0); i < queue.front().children.size(); ++i)
+          queue.push(queue.front().children[i]);
+        queue.pop();
+      }
+
       bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(0,0,0),
                                                   scm::math::vec3(1,1,1));
     }
@@ -91,23 +105,46 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
     vertex_array_.resize(ctx.id + 1);
   }
 
-
-  int numVertice = 8;
-  int numFaces = 12;
+  std::vector<unsigned> index_array;
 
 
   vertices_[ctx.id] =  ctx.render_device->create_buffer(scm::gl::BIND_VERTEX_BUFFER,
                                                         scm::gl::USAGE_STATIC_DRAW,
-                                                        numVertice * sizeof(Vertex),
+                                                        num_nodes_ * sizeof(Vertex),
                                                         0);
 
 
 
   Vertex* data(static_cast<Vertex*>(ctx.render_context->map_buffer(vertices_[ctx.id], scm::gl::ACCESS_WRITE_INVALIDATE_BUFFER)));
 
+  std::queue<CTNode> queue;
+  queue.push(cone_tree_root_);
+  unsigned int vertex_array_idx(0);
+  while (!queue.empty())
+  {
+    data[vertex_array_idx].pos = queue.front().pos;
+    data[vertex_array_idx].tex = scm::math::vec2(0.f, 0.f);
+    data[vertex_array_idx].normal = scm::math::vec3(0.f, 0.f, -1.f);
+    data[vertex_array_idx].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[vertex_array_idx].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+    for (unsigned int i(0); i < queue.front().children.size(); ++i)
+    {
+      queue.push(queue.front().children[i]);
+      index_array.push_back(vertex_array_idx);
+      index_array.push_back(vertex_array_idx + i + 1);
+    }
+    ++vertex_array_idx;
+    queue.pop();
+  }
+
+  Logger::LOG_WARNING << "num vertices: " << num_nodes_ << std::endl;
+  Logger::LOG_WARNING << "indices: " << index_array.size() << std::endl;
+  for (unsigned int i(0); i < index_array.size(); ++i)
+    Logger::LOG_WARNING << "  " << index_array[i] << std::endl;
+
   // for (unsigned v(0); v < numVertice; ++v)
   // {
-    data[0].pos = scm::math::vec3(0.0f, 0.0f, 0.0f);
+    /*data[0].pos = scm::math::vec3(0.0f, 0.0f, 0.0f);
     data[0].tex = scm::math::vec2(0.f, 0.f);
     data[0].normal = scm::math::vec3(-1.f, -1.f, -1.f);
     data[0].tangent = scm::math::vec3(0.f, 0.f, 0.f);
@@ -153,17 +190,15 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
     data[7].tex = scm::math::vec2(0.f, 1.f);
     data[7].normal = scm::math::vec3(-1.f, 1.f, 1.f);
     data[7].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[7].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[7].bitangent = scm::math::vec3(0.f, 0.f, 0.f);*/
 
   // }
 
   ctx.render_context->unmap_buffer(vertices_[ctx.id]);
 
-  std::vector<unsigned> index_array(numFaces * 3);
-
   // for (unsigned t = 0; t < numFaces; ++t)
   // {
-    index_array[0] = 0;
+    /*index_array[0] = 0;
     index_array[1] = 1;
     index_array[2] = 4;
 
@@ -209,12 +244,12 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
 
     index_array[33] = 2;
     index_array[34] = 6;
-    index_array[35] = 7;
+    index_array[35] = 7;*/
   // }
 
   indices_[ctx.id] = ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
                                                       scm::gl::USAGE_STATIC_DRAW,
-                                                      numFaces * 3 * sizeof(unsigned),
+                                                      index_array.size() * sizeof(unsigned),
                                                       &index_array[0]);
 
   std::vector<scm::gl::buffer_ptr> buffer_arrays;
@@ -242,7 +277,8 @@ void ConeTreeRessource::draw(RenderContext const& ctx) const {
   scm::gl::context_vertex_input_guard vig(ctx.render_context);
 
   ctx.render_context->bind_vertex_array(vertex_array_[ctx.id]);
-  ctx.render_context->bind_index_buffer(indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
+  //ctx.render_context->bind_index_buffer(indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
+  ctx.render_context->bind_index_buffer(indices_[ctx.id], scm::gl::PRIMITIVE_LINE_LIST, scm::gl::TYPE_UINT);
 
   ctx.render_context->apply();
   ctx.render_context->draw_elements(36);

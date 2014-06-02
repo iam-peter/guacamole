@@ -97,6 +97,7 @@ class ConeTreeRessource : public GeometryRessource {
   mutable std::mutex upload_mutex_;
 
   CTNode cone_tree_root_;
+  unsigned int num_nodes_;
 
  public:
 

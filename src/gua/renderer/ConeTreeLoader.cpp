@@ -68,12 +68,15 @@ std::shared_ptr<Node> ConeTreeLoader::create(std::string const& node_name,
 {
   CTNode child1;
   CTNode child2;
+  CTNode child2child;
 
-  child1.pos = scm::math::vec3f(1,-1,0);
-  child2.pos = scm::math::vec3f(-1,-1,0);
+  child1.pos = scm::math::vec3f(-0.5, -0.5, 0);
+  child2.pos = scm::math::vec3f(0.5, -0.5, 0);
+  child2child.pos = scm::math::vec3f(0.5, -1, 0);
+  child2.children.push_back(child2child);
 
   CTNode root;
-  root.pos = scm::math::vec3f(0,0,0);
+  root.pos = scm::math::vec3f(0, 0, 0);
   root.children.push_back(child1);
   root.children.push_back(child2);
   
