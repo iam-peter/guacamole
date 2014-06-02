@@ -25,6 +25,8 @@
 // guacamole headers
 #include <gua/renderer/ConeTreeRessource.hpp>
 #include <gua/renderer/GeometryLoader.hpp>
+#include <gua/scenegraph/SceneGraph.hpp>
+
 
 // external headers
 #include <string>
@@ -58,7 +60,7 @@ public:
    /**
    *
    */
-   std::shared_ptr<Node> create(std::string const& node_name, std::string const& material);
+   std::shared_ptr<Node> create(std::string const& node_name, std::string const& material, SceneGraph const& graph);
 
   /**
   *

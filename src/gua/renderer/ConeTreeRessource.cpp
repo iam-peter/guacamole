@@ -28,15 +28,6 @@
 #include <gua/renderer/ShaderProgram.hpp>
 #include <gua/utils/Logger.hpp>
 
-// external headers
-#if ASSIMP_VERSION == 3
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
-#else
-#include <assimp/assimp.hpp>
-#include <assimp/aiPostProcess.h>
-#include <assimp/aiScene.h>
-#endif
 
 namespace {
 struct Vertex {
@@ -52,11 +43,11 @@ namespace gua {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ConeTreeRessource::ConeTreeRessource()
-    : vertices_(), indices_(), vertex_array_(), upload_mutex_(), mesh_(nullptr) 
+ConeTreeRessource::ConeTreeRessource(CTNode const& root)
+    : vertices_(), indices_(), vertex_array_(), upload_mutex_(), cone_tree_root_(root) 
     {
-      bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(-2,-2,-2),
-                                                  scm::math::vec3(2,2,2));
+      bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(0,0,0),
+                                                  scm::math::vec3(1,1,1));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,8 +92,8 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
   }
 
 
-  int numVertice = 3;
-  int numFaces = 1;
+  int numVertice = 8;
+  int numFaces = 12;
 
 
   vertices_[ctx.id] =  ctx.render_device->create_buffer(scm::gl::BIND_VERTEX_BUFFER,
@@ -118,22 +109,51 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
   // {
     data[0].pos = scm::math::vec3(0.0f, 0.0f, 0.0f);
     data[0].tex = scm::math::vec2(0.f, 0.f);
-    data[0].normal = scm::math::vec3(0.f, 0.f, 1.f);
+    data[0].normal = scm::math::vec3(-1.f, -1.f, -1.f);
     data[0].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[0].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
-    data[1].pos = scm::math::vec3(0.5f, 0.0f, 0.0f);
+    data[1].pos = scm::math::vec3(1.0f, 0.0f, 0.0f);
     data[1].tex = scm::math::vec2(1.f, 0.f);
-    data[1].normal = scm::math::vec3(0.f, 0.f, 1.f);
+    data[1].normal = scm::math::vec3(1.f, -1.f, -1.f);
     data[1].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[1].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
-    data[2].pos = scm::math::vec3(0.0f, 0.5f, 0.0f);
+    data[2].pos = scm::math::vec3(1.0f, 0.0f, 1.0f);
     data[2].tex = scm::math::vec2(0.f, 1.f);
-    data[2].normal = scm::math::vec3(0.f, 0.f, 1.f);
+    data[2].normal = scm::math::vec3(1.f, -1.f, 1.f);
     data[2].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[2].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
+    data[3].pos = scm::math::vec3(0.0f, 0.0f, 1.0f);
+    data[3].tex = scm::math::vec2(0.f, 0.f);
+    data[3].normal = scm::math::vec3(-1.f, -1.f, 1.f);
+    data[3].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[3].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+
+    data[4].pos = scm::math::vec3(0.0f, 1.0f, 0.0f);
+    data[4].tex = scm::math::vec2(1.f, 0.f);
+    data[4].normal = scm::math::vec3(-1.f, 1.f, -1.f);
+    data[4].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[4].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+
+    data[5].pos = scm::math::vec3(1.0f, 1.0f, 0.0f);
+    data[5].tex = scm::math::vec2(0.f, 1.f);
+    data[5].normal = scm::math::vec3(1.f, 1.f, -1.f);
+    data[5].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[5].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+
+    data[6].pos = scm::math::vec3(1.0f, 1.0f, 1.0f);
+    data[6].tex = scm::math::vec2(0.f, 1.f);
+    data[6].normal = scm::math::vec3(1.f, 1.f, 1.f);
+    data[6].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[6].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+
+    data[7].pos = scm::math::vec3(0.0f, 1.0f, 1.0f);
+    data[7].tex = scm::math::vec2(0.f, 1.f);
+    data[7].normal = scm::math::vec3(-1.f, 1.f, 1.f);
+    data[7].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[7].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
   // }
 
@@ -145,7 +165,51 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
   // {
     index_array[0] = 0;
     index_array[1] = 1;
-    index_array[2] = 2;
+    index_array[2] = 4;
+
+    index_array[3] = 1;
+    index_array[4] = 4;
+    index_array[5] = 5;
+
+    index_array[6] = 0;
+    index_array[7] = 1;
+    index_array[8] = 3;
+
+    index_array[9] = 1;
+    index_array[10] = 2;
+    index_array[11] = 3;
+
+    index_array[12] = 1;
+    index_array[13] = 2;
+    index_array[14] = 5;
+
+    index_array[15] = 2;
+    index_array[16] = 5;
+    index_array[17] = 6;
+
+    index_array[18] = 4;
+    index_array[19] = 5;
+    index_array[20] = 7;
+
+    index_array[21] = 5;
+    index_array[22] = 6;
+    index_array[23] = 7;
+
+    index_array[24] = 0;
+    index_array[25] = 3;
+    index_array[26] = 4;
+
+    index_array[27] = 3;
+    index_array[28] = 4;
+    index_array[29] = 7;
+
+    index_array[30] = 2;
+    index_array[31] = 3;
+    index_array[32] = 7;
+
+    index_array[33] = 2;
+    index_array[34] = 6;
+    index_array[35] = 7;
   // }
 
   indices_[ctx.id] = ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
@@ -181,7 +245,7 @@ void ConeTreeRessource::draw(RenderContext const& ctx) const {
   ctx.render_context->bind_index_buffer(indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
 
   ctx.render_context->apply();
-  ctx.render_context->draw_elements(3);
+  ctx.render_context->draw_elements(36);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -189,27 +253,27 @@ void ConeTreeRessource::draw(RenderContext const& ctx) const {
 void ConeTreeRessource::ray_test(Ray const& ray, PickResult::Options options,
                     Node* owner, std::set<PickResult>& hits) {
 
-  kd_tree_.ray_test(ray, mesh_, options, owner, hits);
+  //kd_tree_.ray_test(ray, mesh_, options, owner, hits);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-unsigned int ConeTreeRessource::num_vertices() const { return mesh_->mNumVertices; }
+unsigned int ConeTreeRessource::num_vertices() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-unsigned int ConeTreeRessource::num_faces() const { return mesh_->mNumFaces; }
+unsigned int ConeTreeRessource::num_faces() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 scm::math::vec3 ConeTreeRessource::get_vertex(unsigned int i) const {
 
   return scm::math::vec3(
-      mesh_->mVertices[i].x, mesh_->mVertices[i].y, mesh_->mVertices[i].z);
+      0.f,0.f,0.f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
+/*
 std::vector<unsigned int> ConeTreeRessource::get_face(unsigned int i) const {
 
   std::vector<unsigned int> face(mesh_->mFaces[i].mNumIndices);
@@ -217,7 +281,7 @@ std::vector<unsigned int> ConeTreeRessource::get_face(unsigned int i) const {
     face[j] = mesh_->mFaces[i].mIndices[j];
   return face;
 }
-
+*/
 ////////////////////////////////////////////////////////////////////////////////
 
 /*virtual*/ GeometryUberShader* ConeTreeRessource::get_ubershader() const {
@@ -225,3 +289,4 @@ std::vector<unsigned int> ConeTreeRessource::get_face(unsigned int i) const {
 }
 
 }
+

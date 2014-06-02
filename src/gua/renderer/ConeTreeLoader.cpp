@@ -63,10 +63,21 @@ ConeTreeLoader::ConeTreeLoader()
 }*/
 
 std::shared_ptr<Node> ConeTreeLoader::create(std::string const& node_name,
-                                                std::string const& material)
+                                             std::string const& material,
+                                             SceneGraph const& graph)
 {
+  CTNode child1;
+  CTNode child2;
 
-  GeometryDatabase::instance()->add(node_name, std::make_shared<ConeTreeRessource>());
+  child1.pos = scm::math::vec3f(1,-1,0);
+  child2.pos = scm::math::vec3f(-1,-1,0);
+
+  CTNode root;
+  root.pos = scm::math::vec3f(0,0,0);
+  root.children.push_back(child1);
+  root.children.push_back(child2);
+  
+  GeometryDatabase::instance()->add(node_name, std::make_shared<ConeTreeRessource>(root));
 
   return std::make_shared<ConeTreeNode>(node_name, node_name, material);
   

@@ -36,13 +36,16 @@
 
 #include <vector>
 
-struct aiMesh;
-
-namespace Assimp { class Importer; }
 
 namespace gua {
 
 struct RenderContext;
+
+struct CTNode {
+  scm::math::vec3f pos;
+  std::vector<CTNode> children;
+};
+
 
 /**
  * Stores geometry data.
@@ -60,16 +63,7 @@ class ConeTreeRessource : public GeometryRessource {
    *
    * Creates a new and empty Mesh.
    */
-   ConeTreeRessource();
-
-  /**
-   * Constructor from an Assimp mesh.
-   *
-   * Initializes the mesh from a given Assimp mesh.
-   *
-   * \param mesh             The Assimp mesh to load the data from.
-   */
-   //ConeTreeRessource(aiMesh* mesh, std::shared_ptr<Assimp::Importer> const& importer, bool build_kd_tree);
+   ConeTreeRessource(CTNode const& root);
 
   /**
    * Draws the Mesh.
@@ -89,7 +83,7 @@ class ConeTreeRessource : public GeometryRessource {
 
   scm::math::vec3 get_vertex(unsigned int i) const;
 
-  std::vector<unsigned int> get_face(unsigned int i) const;
+  //std::vector<unsigned int> get_face(unsigned int i) const;
 
   /*virtual*/ GeometryUberShader* get_ubershader() const;
 
@@ -102,13 +96,14 @@ class ConeTreeRessource : public GeometryRessource {
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
   mutable std::mutex upload_mutex_;
 
+  CTNode cone_tree_root_;
+
  public:
 
   KDTree kd_tree_;
-
-  aiMesh* mesh_;
-  std::shared_ptr<Assimp::Importer> importer_;
 };
+
+
 
 }
 
