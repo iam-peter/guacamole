@@ -41,14 +41,23 @@ namespace gua {
 
 struct RenderContext;
 
+/**
+ * Struct to store the representation of the Scenegraph
+ *
+ */
 struct CTNode {
+
+  void create_layout(int depth, int num_elements, int i, scm::math::vec3f parent_pos);
+
+  int id;
   scm::math::vec3f pos;
   std::vector<CTNode> children;
+  static int id_counter;
 };
 
 
 /**
- * Stores geometry data.
+ * storees geometry data.
  *
  * A mesh can be loaded from an Assimp mesh and the draw onto multiple
  * contexts.
@@ -73,6 +82,11 @@ class ConeTreeRessource : public GeometryRessource {
    * \param context          The RenderContext to draw onto.
    */
   void draw(RenderContext const& context) const;
+
+  /**
+  * Traverses the Cone Tree and expandes the bounding Box
+  */
+  void bounding_box_expand(CTNode const& node);
 
   void ray_test(Ray const& ray, PickResult::Options options,
                 Node* owner, std::set<PickResult>& hits);

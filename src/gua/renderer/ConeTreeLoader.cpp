@@ -36,6 +36,9 @@
 #include <gua/databases/GeometryDatabase.hpp>
 #include <gua/databases/ShadingModelDatabase.hpp>
 
+//external
+#include <queue>
+
 namespace gua {
 
 
@@ -66,26 +69,32 @@ std::shared_ptr<Node> ConeTreeLoader::create(std::string const& node_name,
                                              std::string const& material,
                                              SceneGraph const& graph)
 {
-  CTNode child1;
-  CTNode child2;
-  CTNode child2child;
+  CTNode root = scenegraph_to_CT_Node(graph.get_root());
+  root.create_layout(0, 1 , 0, scm::math::vec3f(0, 0, 0));
 
-  child1.pos = scm::math::vec3f(-0.5, -0.5, 0);
-  child2.pos = scm::math::vec3f(0.5, -0.5, 0);
-  child2child.pos = scm::math::vec3f(0.5, -1, 0);
-  child2.children.push_back(child2child);
-
-  CTNode root;
-  root.pos = scm::math::vec3f(0, 0, 0);
-  root.children.push_back(child1);
-  root.children.push_back(child2);
-  
   GeometryDatabase::instance()->add(node_name, std::make_shared<ConeTreeRessource>(root));
 
   return std::make_shared<ConeTreeNode>(node_name, node_name, material);
   
 }
 ////////////////////////////////////////////////////////////////////////////////
+
+/**
+* Creates a representation of the Scenegraph for the Cone Tree
+*/
+CTNode ConeTreeLoader::scenegraph_to_CT_Node(std::shared_ptr<Node> node) const {
+  CTNode tmp;
+  tmp.id = tmp.id_counter;
+  ++tmp.id_counter;
+  for (auto const& i: node->get_children()){
+    CTNode child = scenegraph_to_CT_Node(i);
+    tmp.children.push_back(child);
+  }
+  return tmp;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 
 bool ConeTreeLoader::is_supported(std::string const& file_name) const {
   

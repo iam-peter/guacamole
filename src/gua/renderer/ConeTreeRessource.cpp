@@ -28,8 +28,10 @@
 #include <gua/renderer/ShaderProgram.hpp>
 #include <gua/utils/Logger.hpp>
 
- #include <queue>
-
+// external headers
+#include <queue>
+#include <cmath>
+#define PI 3.14159265  
 
 namespace {
 struct Vertex {
@@ -42,6 +44,33 @@ struct Vertex {
 }
 
 namespace gua {
+
+int CTNode::id_counter = 0;
+
+void CTNode::create_layout(int depth, int num_elements, int index, scm::math::vec3f parent_pos){
+  double angle = index * 360/num_elements;
+  angle = angle * PI / 180.0;
+  double radius = num_elements ;
+  double lower = -1.0;
+
+  if(num_elements == 1){
+    pos = parent_pos + scm::math::vec3f(0, lower, 0);
+  }else{
+    pos = parent_pos + scm::math::vec3f(std::cos(angle), lower, std::sin(angle));
+  }
+
+  Logger::LOG_WARNING << "ID: " << id << std::endl;
+  Logger::LOG_WARNING << "parent_pos: " << parent_pos << std::endl;
+  Logger::LOG_WARNING << "pos: " << pos << std::endl << std::endl;
+  
+  int count(0);
+  for(auto & i: children){
+    i.create_layout(depth+1, children.size(), count, pos);
+    count++;
+  }
+  return ;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -60,9 +89,22 @@ ConeTreeRessource::ConeTreeRessource(CTNode const& root)
         queue.pop();
       }
 
-      bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(0,0,0),
-                                                  scm::math::vec3(1,1,1));
+      bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(0,0,0));
+      bounding_box_expand(root);
+
+      Logger::LOG_WARNING << "BoundingBox: " << bounding_box_.corners().first << " " << bounding_box_.corners().second << std::endl;
+      
     }
+
+////////////////////////////////////////////////////////////////////////////////
+
+void ConeTreeRessource::bounding_box_expand(CTNode const& node)
+{
+  bounding_box_.expandBy(node.pos);
+  for(auto & i: node.children){
+    bounding_box_expand(i);
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -139,113 +181,12 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
 
   Logger::LOG_WARNING << "num vertices: " << num_nodes_ << std::endl;
   Logger::LOG_WARNING << "indices: " << index_array.size() << std::endl;
+
   for (unsigned int i(0); i < index_array.size(); ++i)
     Logger::LOG_WARNING << "  " << index_array[i] << std::endl;
 
-  // for (unsigned v(0); v < numVertice; ++v)
-  // {
-    /*data[0].pos = scm::math::vec3(0.0f, 0.0f, 0.0f);
-    data[0].tex = scm::math::vec2(0.f, 0.f);
-    data[0].normal = scm::math::vec3(-1.f, -1.f, -1.f);
-    data[0].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[0].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
-
-    data[1].pos = scm::math::vec3(1.0f, 0.0f, 0.0f);
-    data[1].tex = scm::math::vec2(1.f, 0.f);
-    data[1].normal = scm::math::vec3(1.f, -1.f, -1.f);
-    data[1].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[1].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
-
-    data[2].pos = scm::math::vec3(1.0f, 0.0f, 1.0f);
-    data[2].tex = scm::math::vec2(0.f, 1.f);
-    data[2].normal = scm::math::vec3(1.f, -1.f, 1.f);
-    data[2].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[2].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
-
-    data[3].pos = scm::math::vec3(0.0f, 0.0f, 1.0f);
-    data[3].tex = scm::math::vec2(0.f, 0.f);
-    data[3].normal = scm::math::vec3(-1.f, -1.f, 1.f);
-    data[3].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[3].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
-
-    data[4].pos = scm::math::vec3(0.0f, 1.0f, 0.0f);
-    data[4].tex = scm::math::vec2(1.f, 0.f);
-    data[4].normal = scm::math::vec3(-1.f, 1.f, -1.f);
-    data[4].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[4].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
-
-    data[5].pos = scm::math::vec3(1.0f, 1.0f, 0.0f);
-    data[5].tex = scm::math::vec2(0.f, 1.f);
-    data[5].normal = scm::math::vec3(1.f, 1.f, -1.f);
-    data[5].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[5].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
-
-    data[6].pos = scm::math::vec3(1.0f, 1.0f, 1.0f);
-    data[6].tex = scm::math::vec2(0.f, 1.f);
-    data[6].normal = scm::math::vec3(1.f, 1.f, 1.f);
-    data[6].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[6].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
-
-    data[7].pos = scm::math::vec3(0.0f, 1.0f, 1.0f);
-    data[7].tex = scm::math::vec2(0.f, 1.f);
-    data[7].normal = scm::math::vec3(-1.f, 1.f, 1.f);
-    data[7].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[7].bitangent = scm::math::vec3(0.f, 0.f, 0.f);*/
-
-  // }
-
   ctx.render_context->unmap_buffer(vertices_[ctx.id]);
 
-  // for (unsigned t = 0; t < numFaces; ++t)
-  // {
-    /*index_array[0] = 0;
-    index_array[1] = 1;
-    index_array[2] = 4;
-
-    index_array[3] = 1;
-    index_array[4] = 4;
-    index_array[5] = 5;
-
-    index_array[6] = 0;
-    index_array[7] = 1;
-    index_array[8] = 3;
-
-    index_array[9] = 1;
-    index_array[10] = 2;
-    index_array[11] = 3;
-
-    index_array[12] = 1;
-    index_array[13] = 2;
-    index_array[14] = 5;
-
-    index_array[15] = 2;
-    index_array[16] = 5;
-    index_array[17] = 6;
-
-    index_array[18] = 4;
-    index_array[19] = 5;
-    index_array[20] = 7;
-
-    index_array[21] = 5;
-    index_array[22] = 6;
-    index_array[23] = 7;
-
-    index_array[24] = 0;
-    index_array[25] = 3;
-    index_array[26] = 4;
-
-    index_array[27] = 3;
-    index_array[28] = 4;
-    index_array[29] = 7;
-
-    index_array[30] = 2;
-    index_array[31] = 3;
-    index_array[32] = 7;
-
-    index_array[33] = 2;
-    index_array[34] = 6;
-    index_array[35] = 7;*/
-  // }
 
   indices_[ctx.id] = ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
                                                       scm::gl::USAGE_STATIC_DRAW,
@@ -281,7 +222,7 @@ void ConeTreeRessource::draw(RenderContext const& ctx) const {
   ctx.render_context->bind_index_buffer(indices_[ctx.id], scm::gl::PRIMITIVE_LINE_LIST, scm::gl::TYPE_UINT);
 
   ctx.render_context->apply();
-  ctx.render_context->draw_elements(36);
+  ctx.render_context->draw_elements(100);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

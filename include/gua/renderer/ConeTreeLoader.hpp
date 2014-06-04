@@ -66,6 +66,7 @@ public:
   *
   */
   bool is_supported(std::string const& file_name) const;
+  CTNode scenegraph_to_CT_Node(std::shared_ptr<Node> node) const;
 
  private: // methods
 
