@@ -261,9 +261,10 @@ std::vector<unsigned int> ConeTreeRessource::get_face(unsigned int i) const {
 */
 ////////////////////////////////////////////////////////////////////////////////
 
-/*virtual*/ GeometryUberShader* ConeTreeRessource::get_ubershader() const {
-  return Singleton<ConeTreeUberShader>::instance();
+
+/*virtual*/ std::shared_ptr<GeometryUberShader> ConeTreeRessource::create_ubershader() const {
+  return std::make_shared<ConeTreeUberShader>();
 }
 
-}
+} //namespace
 
