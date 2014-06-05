@@ -31,14 +31,18 @@
 
 #include <gua/renderer/Pipeline.hpp>
 #include <gua/renderer/TriMeshUberShader.hpp>
+#include <gua/renderer/TriMeshRessource.hpp>
 #include <gua/renderer/GeometryRessource.hpp>
 #include <gua/renderer/GeometryUberShader.hpp>
 
 #include <gua/scenegraph/GeometryNode.hpp>
 #include <gua/scenegraph/SceneGraph.hpp>
+#include <gua/scenegraph/TriMeshNode.hpp>
 
 #include <gua/databases.hpp>
 #include <gua/databases/GeometryDatabase.hpp>
+
+
 
 namespace gua {
 
@@ -49,7 +53,10 @@ GBufferPass::GBufferPass(Pipeline* pipeline)
       bfc_rasterizer_state_(),
       no_bfc_rasterizer_state_(),
       bbox_rasterizer_state_(),
-      depth_stencil_state_() {}
+      depth_stencil_state_() 
+{
+  initialize_trimesh_ubershader(pipeline->get_context());
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -72,23 +79,25 @@ void GBufferPass::create(
   Pass::create(ctx, tmp);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-void GBufferPass::cleanup(RenderContext const& ctx) { Pass::cleanup(ctx); }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+void GBufferPass::cleanup(RenderContext const& ctx) {
+  Pass::cleanup(ctx); 
+}
+
 
 bool GBufferPass::pre_compile_shaders(const gua::RenderContext& ctx) {
   bool success{true};
 
-  for (auto const& shader : ubershaders_) {
-    success &= shader.second->upload_to(ctx);
+    for (auto const& shader : ubershaders_) {
+      success &= shader.second->upload_to(ctx);
+    }
+
+    return success;
   }
 
-  return success;
-}
-
-////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
 
 void GBufferPass::rendering(SerializedScene const& scene,
                             SceneGraph const& graph,
@@ -103,6 +112,7 @@ void GBufferPass::rendering(SerializedScene const& scene,
     initialize_state_objects(ctx);
   }
 
+
   ctx.render_context->set_rasterizer_state(
       pipeline_->config.enable_backface_culling() ? bfc_rasterizer_state_
                                                   : no_bfc_rasterizer_state_);
@@ -110,7 +120,7 @@ void GBufferPass::rendering(SerializedScene const& scene,
   ctx.render_context->set_depth_stencil_state(depth_stencil_state_);
 
   // make sure all ubershaders are available
-  update_ubershader_from_scene(scene, graph);
+  update_ubershader_from_scene(ctx, scene, graph);
 
   // draw all drawable geometries
   for (auto const& type_ressource_pair : scene.geometrynodes_) {
@@ -136,6 +146,7 @@ void GBufferPass::rendering(SerializedScene const& scene,
       Pass::set_camera_matrices(
           *program, camera, pipeline_->get_current_scene(eye), eye, ctx);
     }
+
 
     // 1. call preframe callback if available for type
     if (ubershader->get_stage_mask() & GeometryUberShader::PRE_FRAME_STAGE) {
@@ -175,8 +186,10 @@ void GBufferPass::rendering(SerializedScene const& scene,
       }
     }
 
+
     // 3. iterate all drawables of current type and call draw of current
     // ubershader
+
     if (ubershader->get_stage_mask() & GeometryUberShader::DRAW_STAGE) {
       for (auto const& node : ressource_container) {
         auto const& ressource =
@@ -203,6 +216,7 @@ void GBufferPass::rendering(SerializedScene const& scene,
             Logger::LOG_WARNING
                 << "GBufferPass::rendering() Cannot find geometry ressource."
                 << ressource << std::endl;
+
           }
         }
       }
@@ -236,6 +250,7 @@ void GBufferPass::rendering(SerializedScene const& scene,
             Logger::LOG_WARNING
                 << "GBufferPass::rendering() Cannot find geometry ressource."
                 << ressource << std::endl;
+
           }
         }
       }
@@ -256,29 +271,31 @@ void GBufferPass::rendering(SerializedScene const& scene,
   display_bboxes(ctx, scene, viewid);
   display_rays(ctx, scene, viewid);
 
+
   ctx.render_context->reset_state_objects();
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void GBufferPass::display_bboxes(RenderContext const& ctx,
                                  SerializedScene const& scene,
                                  std::size_t viewid) {
-  auto meshubershader = Singleton<TriMeshUberShader>::instance();
+
+  
+  auto meshubershader = ubershaders_[typeid(TriMeshNode)];
 
   if (pipeline_->config.enable_bbox_display()) {
     meshubershader->get_program()->use(ctx);
 
     for (auto const& bbox : scene.bounding_boxes_) {
+
       auto scale(scm::math::make_scale((bbox.max - bbox.min) * 1.001f));
       auto translation(
           scm::math::make_translation((bbox.max + bbox.min) / 2.f));
 
       scm::math::mat4 bbox_transform;
       scm::math::set_identity(bbox_transform);
-
-      bbox_transform *= translation;
-      bbox_transform *= scale;
 
       bbox_transform *= translation;
       bbox_transform *= scale;
@@ -300,8 +317,9 @@ void GBufferPass::display_bboxes(RenderContext const& ctx,
 
 void GBufferPass::display_rays(RenderContext const& ctx,
                                SerializedScene const& scene,
-                               std::size_t viewid) {
-  auto meshubershader = Singleton<TriMeshUberShader>::instance();
+                               std::size_t viewid) 
+{
+  auto meshubershader = ubershaders_[typeid(TriMeshNode)];
 
   if (pipeline_->config.enable_ray_display()) {
     meshubershader->get_program()->use(ctx);
@@ -310,7 +328,7 @@ void GBufferPass::display_rays(RenderContext const& ctx,
       for (auto const& ray : scene.rays_) {
         meshubershader->draw(
             ctx,
-            "gua_plane_geometry",
+            "gua_ray_geometry",
             "gua_bounding_box",
             ray->get_cached_world_transform(),
             scm::math::inverse(ray->get_cached_world_transform()),
@@ -327,8 +345,9 @@ void GBufferPass::display_rays(RenderContext const& ctx,
 void GBufferPass::display_quads(RenderContext const& ctx,
                                 SerializedScene const& scene,
                                 CameraMode eye,
-                                std::size_t viewid) {
-  auto meshubershader = Singleton<TriMeshUberShader>::instance();
+                                std::size_t viewid) 
+{
+  auto meshubershader = ubershaders_[typeid(TriMeshNode)];
 
   if (!scene.textured_quads_.empty()) {
     meshubershader->get_program()->use(ctx);
@@ -380,7 +399,8 @@ void GBufferPass::display_quads(RenderContext const& ctx,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void GBufferPass::update_ubershader_from_scene(SerializedScene const& scene,
+void GBufferPass::update_ubershader_from_scene(RenderContext const& ctx,
+                                               SerializedScene const& scene,
                                                SceneGraph const& graph) {
   bool ubershader_available = true;
   for (auto const& geometry_pair : scene.geometrynodes_) {
@@ -397,8 +417,9 @@ void GBufferPass::update_ubershader_from_scene(SerializedScene const& scene,
           auto const& ressource =
               GeometryDatabase::instance()->lookup(geode->get_filename());
           if (ressource) {
-            auto ubershader = ressource->get_ubershader();
-            ubershader->create(materials_);
+            auto ubershader = ressource->create_ubershader();
+            ubershader->cleanup(ctx);
+            ubershader->create(cached_materials_);
             ubershaders_[type] = ubershader;
           }
         }
@@ -438,15 +459,42 @@ void GBufferPass::initialize_state_objects(RenderContext const& ctx) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void GBufferPass::apply_material_mapping(
-    std::set<std::string> const& materials) {
-  materials_ = materials;
-  Singleton<TriMeshUberShader>::instance()->create(materials_);
+    std::set<std::string> const& materials) 
+{
+  cached_materials_ = materials;
+
+  for ( auto const& shader : ubershaders_ )
+  {
+    shader.second->create(cached_materials_);
+  }
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 LayerMapping const* GBufferPass::get_gbuffer_mapping() const {
-  return Singleton<TriMeshUberShader>::instance()->get_gbuffer_mapping();
+  std::type_index trimesh_type = typeid(TriMeshNode);
+
+  if (!ubershaders_.count(trimesh_type)) {
+    // trimesh shader has not been created yet -> return dummy mapping
+    return TriMeshRessource().create_ubershader()->get_gbuffer_mapping();
+  } else {
+    return ubershaders_[trimesh_type]->get_gbuffer_mapping();
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void GBufferPass::initialize_trimesh_ubershader(RenderContext const& ctx) const
+{
+  std::type_index trimesh_type = typeid(TriMeshNode);
+
+  if (!ubershaders_.count(trimesh_type)) {
+    auto ubershader = TriMeshRessource().create_ubershader();
+    ubershader->cleanup(ctx);
+    ubershader->create(cached_materials_);
+    ubershaders_[trimesh_type] = ubershader;
+  }
 }
 
 }

@@ -27,6 +27,7 @@
 #include <gua/renderer/Camera.hpp>
 #include <gua/renderer/Window.hpp>
 #include <gua/renderer/SerializedScene.hpp>
+#include <gua/renderer/GBufferPass.hpp>
 #include <gua/utils/Color3f.hpp>
 #include <gua/utils/configuration_macro.hpp>
 
@@ -179,15 +180,16 @@ class GUA_DLL Pipeline {
     return prerender_pipelines_;
   }
 
-
   inline float get_application_fps() const { return application_fps_; }
   inline float get_rendering_fps() const { return rendering_fps_; }
+  inline RenderContext const& get_context() const { return *context_; };
 
   SerializedScene const& get_current_scene(CameraMode mode) const;
 
   inline std::size_t uuid() const {
     return reinterpret_cast<std::size_t>(this);
   }
+  GBufferPass::GeometryUberShaderMap const& get_geometry_ubershaders() const;
 
   friend class Renderer;
 
