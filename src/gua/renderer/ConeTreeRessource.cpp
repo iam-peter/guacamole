@@ -161,21 +161,23 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
 
   std::queue<CTNode> queue;
   queue.push(cone_tree_root_);
-  unsigned int vertex_array_idx(0);
   while (!queue.empty())
   {
-    data[vertex_array_idx].pos = queue.front().pos;
-    data[vertex_array_idx].tex = scm::math::vec2(0.f, 0.f);
-    data[vertex_array_idx].normal = scm::math::vec3(0.f, 0.f, -1.f);
-    data[vertex_array_idx].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[vertex_array_idx].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+    CTNode& current = queue.front();
+    Logger::LOG_WARNING << "id: " << queue.front().id << std::endl;  
+    data[current.id].pos = queue.front().pos;
+    data[current.id].tex = scm::math::vec2(0.f, 0.f);
+    data[current.id].normal = scm::math::vec3(0.f, 0.f, -1.f);
+    data[current.id].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[current.id].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
     for (unsigned int i(0); i < queue.front().children.size(); ++i)
     {
       queue.push(queue.front().children[i]);
-      index_array.push_back(vertex_array_idx);
-      index_array.push_back(vertex_array_idx + i + 1);
+      index_array.push_back(queue.front().id);
+      index_array.push_back(queue.front().children[i].id);
+      Logger::LOG_WARNING << "From id: " << queue.front().id << std::endl;
+      Logger::LOG_WARNING << "TO   id: " << queue.front().children[i].id << std::endl<< std::endl;
     }
-    ++vertex_array_idx;
     queue.pop();
   }
 
