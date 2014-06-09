@@ -70,7 +70,7 @@ std::shared_ptr<Node> ConeTreeLoader::create(std::string const& node_name,
                                              SceneGraph const& graph)
 {
   CTNode root = scenegraph_to_CT_Node(graph.get_root());
-  root.create_layout(0, 1 , 0, scm::math::vec3f(0, 0, 0));
+  root.create_layout(0, 1 , 0, scm::math::vec3f(0, 1, 0));
 
   GeometryDatabase::instance()->add(node_name, std::make_shared<ConeTreeRessource>(root));
 

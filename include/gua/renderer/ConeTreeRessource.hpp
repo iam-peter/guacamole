@@ -106,7 +106,8 @@ class ConeTreeRessource : public GeometryRessource {
   void upload_to(RenderContext const& context) const;
 
   mutable std::vector<scm::gl::buffer_ptr> vertices_;
-  mutable std::vector<scm::gl::buffer_ptr> indices_;
+  mutable std::vector<scm::gl::buffer_ptr> indices_lines_;
+  mutable std::vector<scm::gl::buffer_ptr> indices_spheres_;
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
   mutable std::mutex upload_mutex_;
 

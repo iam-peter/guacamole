@@ -59,10 +59,6 @@ void CTNode::create_layout(int depth, int num_elements, int index, scm::math::ve
     pos = parent_pos + scm::math::vec3f(std::cos(angle), lower, std::sin(angle));
   }
 
-  Logger::LOG_WARNING << "ID: " << id << std::endl;
-  Logger::LOG_WARNING << "parent_pos: " << parent_pos << std::endl;
-  Logger::LOG_WARNING << "pos: " << pos << std::endl << std::endl;
-  
   int count(0);
   for(auto & i: children){
     i.create_layout(depth+1, children.size(), count, pos);
@@ -75,7 +71,7 @@ void CTNode::create_layout(int depth, int num_elements, int index, scm::math::ve
 ////////////////////////////////////////////////////////////////////////////////
 
 ConeTreeRessource::ConeTreeRessource(CTNode const& root)
-    : vertices_(), indices_(), vertex_array_(), upload_mutex_(), cone_tree_root_(root), num_nodes_(1) 
+    : vertices_(), indices_lines_(), indices_spheres_(), vertex_array_(), upload_mutex_(), cone_tree_root_(root), num_nodes_(1) 
     {
 
       // traverse the tree and count the number of nodes
@@ -91,9 +87,6 @@ ConeTreeRessource::ConeTreeRessource(CTNode const& root)
 
       bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(0,0,0));
       bounding_box_expand(root);
-
-      Logger::LOG_WARNING << "BoundingBox: " << bounding_box_.corners().first << " " << bounding_box_.corners().second << std::endl;
-      
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -108,51 +101,26 @@ void ConeTreeRessource::bounding_box_expand(CTNode const& node)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/*ConeTreeRessource::ConeTreeRessource(aiMesh* mesh, std::shared_ptr<Assimp::Importer> const& importer,
-           bool build_kd_tree)
-    : vertices_(),
-      indices_(),
-      vertex_array_(),
-      upload_mutex_(),
-      mesh_(mesh),
-      importer_(importer) {
-
-  if (mesh_->HasPositions()) {
-    bounding_box_ = math::BoundingBox<math::vec3>(scm::math::vec3(-1,-1,-1),
-                                                  scm::math::vec3(1,1,1));
-
-    if (build_kd_tree) {
-      kd_tree_.generate(mesh_);
-    }
-  }
-}*/
-
-////////////////////////////////////////////////////////////////////////////////
 
 void ConeTreeRessource::upload_to(RenderContext const& ctx) const
 {
-
-
-  /*if (!mesh_->HasPositions()) {
-    Logger::LOG_WARNING << "Unable to load Mesh! Has no vertex data." << std::endl;
-    return;
-  }*/
-
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
   if (vertices_.size() <= ctx.id) {
     vertices_.resize(ctx.id + 1);
-    indices_.resize(ctx.id + 1);
+    indices_lines_.resize(ctx.id + 1);
+    indices_spheres_.resize(ctx.id + 1);
     vertex_array_.resize(ctx.id + 1);
   }
 
   std::vector<unsigned> index_array;
+  std::vector<unsigned> index_array2;
 
 
   vertices_[ctx.id] =  ctx.render_device->create_buffer(scm::gl::BIND_VERTEX_BUFFER,
                                                         scm::gl::USAGE_STATIC_DRAW,
-                                                        num_nodes_ * sizeof(Vertex),
+                                                        (num_nodes_+3) * sizeof(Vertex),  //TODO Correct number
                                                         0);
 
 
@@ -164,37 +132,67 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
   while (!queue.empty())
   {
     CTNode& current = queue.front();
-    Logger::LOG_WARNING << "id: " << queue.front().id << std::endl;  
+
     data[current.id].pos = queue.front().pos;
     data[current.id].tex = scm::math::vec2(0.f, 0.f);
     data[current.id].normal = scm::math::vec3(0.f, 0.f, -1.f);
     data[current.id].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[current.id].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+
     for (unsigned int i(0); i < queue.front().children.size(); ++i)
     {
       queue.push(queue.front().children[i]);
       index_array.push_back(queue.front().id);
       index_array.push_back(queue.front().children[i].id);
-      Logger::LOG_WARNING << "From id: " << queue.front().id << std::endl;
-      Logger::LOG_WARNING << "TO   id: " << queue.front().children[i].id << std::endl<< std::endl;
     }
     queue.pop();
   }
 
-  Logger::LOG_WARNING << "num vertices: " << num_nodes_ << std::endl;
-  Logger::LOG_WARNING << "indices: " << index_array.size() << std::endl;
+  //TESTTESTTESTTESTTESTTESTTESTTESTTEST  //TODO create spheres
+  CTNode& tmp = queue.front();
+  data[tmp.id_counter].pos = scm::math::vec3(-0.1f, 0.0f, 0.0f);
+  data[tmp.id_counter].tex = scm::math::vec2(0.f, 0.f);
+  data[tmp.id_counter].normal = scm::math::vec3(0.f, 0.f, -1.f);
+  data[tmp.id_counter].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+  data[tmp.id_counter].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+
+  data[tmp.id_counter+1].pos = scm::math::vec3(0.1f, 0.0f, 0.0f);
+  data[tmp.id_counter+1].tex = scm::math::vec2(0.f, 0.f);
+  data[tmp.id_counter+1].normal = scm::math::vec3(0.f, 0.f, -1.f);
+  data[tmp.id_counter+1].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+  data[tmp.id_counter+1].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+
+  data[tmp.id_counter+2].pos = scm::math::vec3(0.0f, 0.15f, 0.0f);
+  data[tmp.id_counter+2].tex = scm::math::vec2(0.f, 0.f);
+  data[tmp.id_counter+2].normal = scm::math::vec3(0.f, 0.f, -1.f);
+  data[tmp.id_counter+2].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+  data[tmp.id_counter+2].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+
+  index_array2.push_back(tmp.id_counter);
+  index_array2.push_back(tmp.id_counter+1);
+  index_array2.push_back(tmp.id_counter+2);
+  //TESTTESTTESTTESTTESTTESTTESTTESTTEST
 
   for (unsigned int i(0); i < index_array.size(); ++i)
-    Logger::LOG_WARNING << "  " << index_array[i] << std::endl;
+    Logger::LOG_WARNING << "IA1  " << index_array[i] << std::endl;
+
+  for (unsigned int i(0); i < index_array2.size(); ++i)
+    Logger::LOG_WARNING << "IA2  " << index_array2[i] << std::endl;
 
   ctx.render_context->unmap_buffer(vertices_[ctx.id]);
 
 
-  indices_[ctx.id] = ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
+  indices_lines_[ctx.id] = ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
                                                       scm::gl::USAGE_STATIC_DRAW,
                                                       index_array.size() * sizeof(unsigned),
                                                       &index_array[0]);
 
+  indices_spheres_[ctx.id] = ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
+                                                      scm::gl::USAGE_STATIC_DRAW,
+                                                      index_array2.size() * sizeof(unsigned),
+                                                      &index_array2[0]);
+
+  
   std::vector<scm::gl::buffer_ptr> buffer_arrays;
   buffer_arrays.push_back(vertices_[ctx.id]);
 
@@ -218,13 +216,19 @@ void ConeTreeRessource::draw(RenderContext const& ctx) const {
   }
 
   scm::gl::context_vertex_input_guard vig(ctx.render_context);
-
+  
+  //Bind all verticies
   ctx.render_context->bind_vertex_array(vertex_array_[ctx.id]);
-  //ctx.render_context->bind_index_buffer(indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
-  ctx.render_context->bind_index_buffer(indices_[ctx.id], scm::gl::PRIMITIVE_LINE_LIST, scm::gl::TYPE_UINT);
-
+  
+  // Draw the Lines
+  ctx.render_context->bind_index_buffer(indices_lines_[ctx.id], scm::gl::PRIMITIVE_LINE_LIST, scm::gl::TYPE_UINT);
   ctx.render_context->apply();
-  ctx.render_context->draw_elements(100);
+  ctx.render_context->draw_elements(100);  //TODO correct number
+
+  // Draw the Triangles (Spheres)
+  ctx.render_context->bind_index_buffer(indices_spheres_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
+  ctx.render_context->apply();
+  ctx.render_context->draw_elements(100);  //TODO correct number
 }
 
 ////////////////////////////////////////////////////////////////////////////////
