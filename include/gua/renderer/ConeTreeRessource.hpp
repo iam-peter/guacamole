@@ -36,8 +36,18 @@
 
 #include <vector>
 
+namespace{
+struct Vertex {
+  scm::math::vec3f pos;
+  scm::math::vec2f tex;
+  scm::math::vec3f normal;
+  scm::math::vec3f tangent;
+  scm::math::vec3f bitangent;
+};
+}
 
 namespace gua {
+
 
 struct RenderContext;
 
@@ -102,13 +112,20 @@ class ConeTreeRessource : public GeometryRessource {
   /*virtual*/ std::shared_ptr<GeometryUberShader> create_ubershader() const;
 
  private:
-
+  /*
+  * create Spheres
+  */
+  std::vector<Vertex> generate_sphere_vertices(unsigned int rings, unsigned int sectors, float radius) const;
+  std::vector<unsigned> generate_sphere_indices(unsigned int rings, unsigned int sectors) const;
+  
   void upload_to(RenderContext const& context) const;
 
-  mutable std::vector<scm::gl::buffer_ptr> vertices_;
+  mutable std::vector<scm::gl::buffer_ptr> vertices_lines_;
+  mutable std::vector<scm::gl::buffer_ptr> vertices_spheres_;
   mutable std::vector<scm::gl::buffer_ptr> indices_lines_;
   mutable std::vector<scm::gl::buffer_ptr> indices_spheres_;
-  mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
+  mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_lines_;
+  mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_spheres_;
   mutable std::mutex upload_mutex_;
 
   CTNode cone_tree_root_;
