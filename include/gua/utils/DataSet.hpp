@@ -24,6 +24,7 @@
 
 #include <gua/utils/DataColumn.hpp>
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -37,6 +38,8 @@ public:
 	DataSet();
 
 	bool load_from_csv(std::string const& filename);
+
+	void print_data_records(std::ostream& stream);
 
 private:
 	std::vector< std::shared_ptr<DataColumn> > columns_;

@@ -35,5 +35,10 @@ bool DataSet::load_from_csv(std::string const& filename)
 	return true;
 }
 
+void DataSet::print_data_records(std::ostream& stream)
+{
+	stream << "printing data records:" << std::endl;
+}
+
 }	// utils namespace
 }	// gua namespace
