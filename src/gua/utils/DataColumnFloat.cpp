@@ -35,21 +35,32 @@ DataColumnFloat::DataColumnFloat(std::string const& label, DataType const& data_
 
 /*virtual*/ void DataColumnFloat::normalize()
 {
-	if (!norm_values_.empty())
+	norm_values_.clear();
+	if (!values_.empty())
 	{
 		float min(std::numeric_limits<float>::max());
 		float max(std::numeric_limits<float>::min());
 
-		for (float f: norm_values_) {
+		for (float f: values_) {
 			if (f < min) min = f;
 			if (f > max) max = f;
 		}
 
 		float range(max - min);
-		for (float f: norm_values_) {
-			f = (f - min) / range;
+		for (float f: values_) {
+			norm_values_.push_back((f - min) / range);
 		}
 	}
+}
+
+void DataColumnFloat::add_value(float value)
+{
+	values_.push_back(value);
+}
+
+void DataColumnFloat::add_values(std::vector<float> const& values)
+{
+	values_.insert(values_.end(), values.begin(), values.end());
 }
 
 }	// utils namespace

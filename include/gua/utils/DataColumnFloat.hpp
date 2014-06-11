@@ -38,6 +38,12 @@ public:
 	virtual ~DataColumnFloat();
 
 	virtual void normalize();
+
+	void 					add_value(float value);
+	void 					add_values(std::vector<float> const& values);
+
+protected:
+	std::vector<float>	values_;
 };
 
 
