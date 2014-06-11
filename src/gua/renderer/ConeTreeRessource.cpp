@@ -61,8 +61,12 @@ void CTNode::create_layout(int depth, int num_elements, int index, scm::math::ve
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ConeTreeRessource::ConeTreeRessource(CTNode const& root)
-    : vertices_lines_(), vertices_spheres_(), indices_lines_(), indices_spheres_(), vertex_array_lines_(), vertex_array_spheres_(), upload_mutex_(), cone_tree_root_(root), num_nodes_(1) 
+ConeTreeRessource::ConeTreeRessource(CTNode const& root, unsigned sphere_resolution)
+    : vertices_lines_(), vertices_spheres_(),
+      indices_lines_(), indices_spheres_(),
+      vertex_array_lines_(), vertex_array_spheres_(),
+      upload_mutex_(),
+      cone_tree_root_(root), num_nodes_(1), sphere_resolution_(128)
     {
 
       // traverse the tree and count the number of nodes
@@ -113,6 +117,7 @@ std::vector<Vertex> ConeTreeRessource::generate_sphere_vertices(unsigned int rin
       tmp.tangent = scm::math::vec3(0.f, 0.f, 0.f);
       tmp.bitangent = scm::math::vec3(0.f, 0.f, 0.f);
       
+      vertices.push_back(tmp);  
     }
 
   return vertices;
@@ -158,9 +163,6 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
   std::vector<unsigned> index_array;
   std::vector<unsigned> index_array2;
 
-  unsigned rings = 16;
-  unsigned segments = 16;
-
 
   vertices_lines_[ctx.id] =  ctx.render_device->create_buffer(scm::gl::BIND_VERTEX_BUFFER,
                                                         scm::gl::USAGE_STATIC_DRAW,
@@ -169,7 +171,7 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
 
   vertices_spheres_[ctx.id] =  ctx.render_device->create_buffer(scm:: gl::BIND_VERTEX_BUFFER,
                                                         scm::gl::USAGE_STATIC_DRAW,
-                                                        (num_nodes_) * (rings-1) * (segments-1) * sizeof(Vertex),  //TODO Correct number
+                                                        (sphere_resolution_) * (sphere_resolution_) * sizeof(Vertex),  //TODO Correct number
                                                         0);
 
 
@@ -201,21 +203,21 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
   // TODO create spheres
   Vertex* data2(static_cast<Vertex*>(ctx.render_context->map_buffer(vertices_spheres_[ctx.id], scm::gl::ACCESS_WRITE_INVALIDATE_BUFFER)));
   
-  std::vector<Vertex> verts = generate_sphere_vertices(rings,segments,1);
+  std::vector<Vertex> verts = generate_sphere_vertices(sphere_resolution_,sphere_resolution_,1);
   
-
   for (int i = 0; i < verts.size(); i++){
     data2[i] = verts[i];
   }
 
-  index_array2 = generate_sphere_indices(rings,segments);
+  index_array2 = generate_sphere_indices(sphere_resolution_,sphere_resolution_);
 
 
-  for (unsigned int i(0); i < index_array.size(); ++i)
-    Logger::LOG_WARNING << "IA1  " << index_array[i] << std::endl;
+  for (unsigned int i(0); i < verts.size(); ++i)
+    Logger::LOG_WARNING << "Vert_sphere " << verts[i].pos << std::endl;
 
-  for (unsigned int i(0); i < index_array2.size(); ++i)
-    Logger::LOG_WARNING << "IA2  " << index_array2[i] << std::endl;
+  // for (unsigned int i(0); i < index_array2.size(); ++i)
+  //   Logger::LOG_WARNING << "IA2  " << index_array2[i] << std::endl;
+
 
 
   ctx.render_context->unmap_buffer(vertices_spheres_[ctx.id]);
@@ -279,7 +281,7 @@ void ConeTreeRessource::draw(RenderContext const& ctx) const {
   ctx.render_context->bind_vertex_array(vertex_array_spheres_[ctx.id]);
   ctx.render_context->bind_index_buffer(indices_spheres_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
   ctx.render_context->apply();
-  ctx.render_context->draw_elements(10000);  //TODO correct number
+  ctx.render_context->draw_elements((sphere_resolution_-1)*(sphere_resolution_-1)*6);  //TODO correct number
 }
 
 ////////////////////////////////////////////////////////////////////////////////

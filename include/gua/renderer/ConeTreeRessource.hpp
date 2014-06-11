@@ -82,7 +82,7 @@ class ConeTreeRessource : public GeometryRessource {
    *
    * Creates a new and empty Mesh.
    */
-   ConeTreeRessource(CTNode const& root);
+   ConeTreeRessource(CTNode const& root, unsigned sphere_resolution = 16);
 
   /**
    * Draws the Mesh.
@@ -130,6 +130,8 @@ class ConeTreeRessource : public GeometryRessource {
 
   CTNode cone_tree_root_;
   unsigned int num_nodes_;
+
+  unsigned sphere_resolution_;
 
  public:
 
