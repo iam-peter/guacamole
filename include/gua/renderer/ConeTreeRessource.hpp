@@ -128,6 +128,8 @@ class ConeTreeRessource : public GeometryRessource {
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_spheres_;
   mutable std::mutex upload_mutex_;
 
+  mutable scm::gl::rasterizer_state_ptr rasterizer_state_;
+
   CTNode cone_tree_root_;
   unsigned int num_nodes_;
 
