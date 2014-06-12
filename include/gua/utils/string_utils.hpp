@@ -42,6 +42,7 @@ template <typename T> inline T from_string(std::string const value) {
 }
 
 std::vector<std::string> split(std::string const& s, char delim);
+std::string join(std::vector<std::string> const&, std::string const& delim = ", ");
 
 std::string& replace(std::string& str,
                      std::string const& old_str,

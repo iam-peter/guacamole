@@ -42,6 +42,22 @@ std::vector<std::string> split(std::string const& s, char delim) {
 
 ////////////////////////////////////////////////////////////////////////////
 
+std::string join(std::vector<std::string> const& vec, std::string const& delim) {
+
+  std::string result;
+
+  for (unsigned int i(0); i < vec.size(); ++i) {
+    if (i > 0)
+      result += delim;
+    result += vec[i];
+  }
+
+  return result;
+
+}
+
+////////////////////////////////////////////////////////////////////////////
+
 std::string& replace(std::string& str,
                      std::string const& old_str,
                      std::string const& new_str) {
