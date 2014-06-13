@@ -20,53 +20,47 @@
  ******************************************************************************/
 
 // class header
-#include <gua/utils/DataColumnFloat.hpp>
+#include <gua/utils/DataColumnString.hpp>
 
 namespace gua {
 namespace utils {
 
-DataColumnFloat::DataColumnFloat(std::string const& label):
-	  DataColumn(label, FLOAT)
-	, min_(std::numeric_limits<float>::max())
-	, max_(std::numeric_limits<float>::min())
+DataColumnString::DataColumnString(std::string const& label):
+	DataColumn(label, STRING)
 {
 }
 
-/*virtual*/ DataColumnFloat::~DataColumnFloat()
+/*virtual*/ DataColumnString::~DataColumnString()
 {}
 
-/*virtual*/ void DataColumnFloat::normalize()
+/*virtual*/ void DataColumnString::normalize()
 {
 	norm_values_.clear();
 	if (!values_.empty())
 	{
-		float range(max_ - min_);
-		for (float value: values_) {
-			norm_values_.push_back((value - min_) / range);
+		float range(values_.size() - 1.0f);
+		for (std::string value: values_)
+		{
+			// find string in our set; norm value is the index normalized to set size
+			auto it = values_.find(value);
+			norm_values_.push_back(std::distance(values_.begin(), it) / range);
 		}
 	}
 }
 
-/*virtual*/ bool DataColumnFloat::add_string_value(std::string const& str)
+/*virtual*/ bool DataColumnString::add_string_value(std::string const& str)
 {
-	add_value(gua::string_utils::from_string<float>(str));
+	add_value(str);
 }
 
-void DataColumnFloat::add_value(float value)
+void DataColumnString::add_value(std::string const& value)
 {
-	if (value > max_) max_ = value;
-	if (value < min_) min_ = value;
-	values_.push_back(value);
+	values_.insert(value);
 }
 
-void DataColumnFloat::add_values(std::vector<float> const& values)
+void DataColumnString::add_values(std::vector<std::string> const& values)
 {
-	for (float value: values)
-	{
-		if (value > max_) max_ = value;
-		if (value < min_) min_ = value;
-	}
-	values_.insert(values_.end(), values.begin(), values.end());
+	std::copy(values.begin(), values.end(), std::inserter(values_, values_.end()));
 }
 
 }	// utils namespace

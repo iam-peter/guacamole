@@ -31,7 +31,7 @@ namespace utils {
 enum DataType
 {
 	FLOAT,
-	INTEGER,
+	INT,
 	STRING,
 	BOOLEAN
 };
@@ -49,6 +49,8 @@ public:
 	unsigned int 							get_num_values() const;
 
 	virtual void 							normalize() = 0;
+
+	virtual bool 							add_string_value(std::string const& str) = 0;
 
 protected:
 	std::string 				label_;

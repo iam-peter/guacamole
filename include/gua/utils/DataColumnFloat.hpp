@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 
+#include <gua/utils/string_utils.hpp>
 #include <gua/utils/DataColumn.hpp>
 
 namespace gua {
@@ -34,15 +35,19 @@ namespace utils {
 class DataColumnFloat : public DataColumn
 {
 public:
-	DataColumnFloat(std::string const& label, DataType const& data_type);
-	virtual ~DataColumnFloat();
+								DataColumnFloat(std::string const& label);
+	virtual 			~DataColumnFloat();
 
-	virtual void normalize();
+	virtual void 	normalize();
+
+	virtual bool 	add_string_value(std::string const& str);
 
 	void 					add_value(float value);
 	void 					add_values(std::vector<float> const& values);
 
 protected:
+	float 							min_;
+	float 							max_;
 	std::vector<float>	values_;
 };
 

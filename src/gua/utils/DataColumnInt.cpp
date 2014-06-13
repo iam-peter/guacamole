@@ -20,48 +20,48 @@
  ******************************************************************************/
 
 // class header
-#include <gua/utils/DataColumnFloat.hpp>
+#include <gua/utils/DataColumnInt.hpp>
 
 namespace gua {
 namespace utils {
 
-DataColumnFloat::DataColumnFloat(std::string const& label):
-	  DataColumn(label, FLOAT)
+DataColumnInt::DataColumnInt(std::string const& label):
+	  DataColumn(label, INT)
 	, min_(std::numeric_limits<float>::max())
 	, max_(std::numeric_limits<float>::min())
 {
 }
 
-/*virtual*/ DataColumnFloat::~DataColumnFloat()
+/*virtual*/ DataColumnInt::~DataColumnInt()
 {}
 
-/*virtual*/ void DataColumnFloat::normalize()
+/*virtual*/ void DataColumnInt::normalize()
 {
 	norm_values_.clear();
 	if (!values_.empty())
 	{
 		float range(max_ - min_);
-		for (float value: values_) {
+		for (int value: values_) {
 			norm_values_.push_back((value - min_) / range);
 		}
 	}
 }
 
-/*virtual*/ bool DataColumnFloat::add_string_value(std::string const& str)
+/*virtual*/ bool DataColumnInt::add_string_value(std::string const& str)
 {
-	add_value(gua::string_utils::from_string<float>(str));
+	add_value(gua::string_utils::from_string<int>(str));
 }
 
-void DataColumnFloat::add_value(float value)
+void DataColumnInt::add_value(int value)
 {
 	if (value > max_) max_ = value;
 	if (value < min_) min_ = value;
 	values_.push_back(value);
 }
 
-void DataColumnFloat::add_values(std::vector<float> const& values)
+void DataColumnInt::add_values(std::vector<int> const& values)
 {
-	for (float value: values)
+	for (int value: values)
 	{
 		if (value > max_) max_ = value;
 		if (value < min_) min_ = value;
