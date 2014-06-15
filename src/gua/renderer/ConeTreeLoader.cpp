@@ -69,12 +69,15 @@ std::shared_ptr<Node> ConeTreeLoader::create(std::string const& node_name,
                                              std::string const& material,
                                              SceneGraph const& graph)
 {
-  CTNode root = scenegraph_to_CT_Node(graph.get_root());
-  root.create_layout(0, 1 , 0, scm::math::vec3f(0, 1, 0));
 
+  std::shared_ptr<CTNode> root = scenegraph_to_CT_Node(graph.get_root(), nullptr);
+  // root->create_layout(0, 1 , 0, scm::math::vec3f(0, 1, 0));
+  // root.create_layout2();
+
+  ConeTree CT(root);
   
-  GeometryDatabase::instance()->add(node_name, std::make_shared<ConeTreeRessource>(root));
-  
+  GeometryDatabase::instance()->add(node_name, std::make_shared<ConeTreeRessource>(CT.get_root()));
+  // GeometryDatabase::instance()->add(node_name, std::make_shared<ConeTreeRessource>(root));
   return std::make_shared<ConeTreeNode>(node_name, node_name, material);
   
 }
@@ -83,13 +86,16 @@ std::shared_ptr<Node> ConeTreeLoader::create(std::string const& node_name,
 /**
 * Creates a representation of the Scenegraph for the Cone Tree
 */
-CTNode ConeTreeLoader::scenegraph_to_CT_Node(std::shared_ptr<Node> node) const {
-  CTNode tmp;
-  tmp.id = tmp.id_counter;
-  ++tmp.id_counter;
+std::shared_ptr<CTNode> ConeTreeLoader::scenegraph_to_CT_Node(std::shared_ptr<Node> node, std::shared_ptr<CTNode> parent) const {
+  
+  std::shared_ptr<CTNode> tmp = std::make_shared<CTNode>();
+  tmp->parent_ = parent;
+  tmp->id = tmp->id_counter;
+  ++tmp->id_counter;
+  tmp->cone_radius_ = 0;
   for (auto const& i: node->get_children()){
-    CTNode child = scenegraph_to_CT_Node(i);
-    tmp.children.push_back(child);
+    std::shared_ptr<CTNode> child = scenegraph_to_CT_Node(i, tmp);
+    tmp->children.push_back(child);
   }
   return tmp;
 }

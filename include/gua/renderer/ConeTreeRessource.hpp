@@ -51,19 +51,34 @@ namespace gua {
 
 struct RenderContext;
 
-/**
- * Struct to store the representation of the Scenegraph
- *
- */
 struct CTNode {
-
   void create_layout(int depth, int num_elements, int i, scm::math::vec3f parent_pos);
 
+  bool is_leaf() const;
   int id;
   scm::math::vec3f pos;
-  std::vector<CTNode> children;
+  std::shared_ptr<CTNode> parent_;
+  std::vector<std::shared_ptr<CTNode>> children;
+  
+  float cone_radius_;
+  float angle_;
   static int id_counter;
 };
+
+class ConeTree{
+public:
+  ConeTree(std::shared_ptr<CTNode> const& root);
+  void create_layout();
+  void create_radii(std::shared_ptr<CTNode> const& node);
+  void create_angles(std::shared_ptr<CTNode> const& node, float index, float num_elements);
+  void set_layout();
+  void debug() const;
+  std::shared_ptr<CTNode> get_root() const;
+private:
+  std::shared_ptr<CTNode> root_;
+};
+
+
 
 
 /**
@@ -82,7 +97,7 @@ class ConeTreeRessource : public GeometryRessource {
    *
    * Creates a new and empty Mesh.
    */
-   ConeTreeRessource(CTNode const& root, unsigned sphere_resolution = 16);
+  ConeTreeRessource(std::shared_ptr<CTNode> const& root, unsigned sphere_resolution = 16);
 
   /**
    * Draws the Mesh.
@@ -96,7 +111,7 @@ class ConeTreeRessource : public GeometryRessource {
   /**
   * Traverses the Cone Tree and expandes the bounding Box
   */
-  void bounding_box_expand(CTNode const& node);
+  void bounding_box_expand(std::shared_ptr<CTNode> const& node);
 
   void ray_test(Ray const& ray, PickResult::Options options,
                 Node* owner, std::set<PickResult>& hits);
@@ -130,7 +145,7 @@ class ConeTreeRessource : public GeometryRessource {
 
   mutable scm::gl::rasterizer_state_ptr rasterizer_state_;
 
-  CTNode cone_tree_root_;
+  std::shared_ptr<CTNode> cone_tree_root_;
   unsigned int num_nodes_;
 
   unsigned sphere_resolution_;

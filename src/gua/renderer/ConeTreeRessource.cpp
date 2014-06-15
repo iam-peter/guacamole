@@ -30,6 +30,7 @@
 
 // external headers
 #include <queue>
+#include <stack>
 #include <cmath>
 #include <scm/gl_core/render_device/context_guards.h>
 
@@ -39,32 +40,122 @@
 
 namespace gua {
 
+
+
+// ---------- CTNode --------------
+
 int CTNode::id_counter = 0;
 
 void CTNode::create_layout(int depth, int num_elements, int index, scm::math::vec3f parent_pos){
+  
   double angle = index * 360/num_elements;
   angle = angle * PI / 180.0;
-  double radius = num_elements ;
+  double radius = num_elements / 8.0;
   double lower = -1.0;
 
   if(num_elements == 1){
     pos = parent_pos + scm::math::vec3f(0, lower, 0);
   }else{
-    pos = parent_pos + scm::math::vec3f(std::cos(angle), lower, std::sin(angle));
+    pos = parent_pos + scm::math::vec3f(std::cos(angle) * radius, lower, std::sin(angle) *radius);
   }
 
   int count(0);
   for(auto & i: children){
-    i.create_layout(depth+1, children.size(), count, pos);
+    i->create_layout(depth+1, children.size(), count, pos);
     count++;
   }
   return ;
 }
 
+bool CTNode::is_leaf() const{
+  return (children.size() == 0);
+}
 
-////////////////////////////////////////////////////////////////////////////////
+// ---------- ConeTree --------------
+ConeTree::ConeTree(std::shared_ptr<CTNode> const& root):
+  root_(root) 
+{
+  create_layout();
+  set_layout();
+}
 
-ConeTreeRessource::ConeTreeRessource(CTNode const& root, unsigned sphere_resolution)
+void ConeTree::create_layout(){
+  create_radii(root_);
+  create_angles(root_, 0, 1);
+}
+
+void ConeTree::create_radii(std::shared_ptr<CTNode> const& node){
+
+  if(node->is_leaf()){
+    node->cone_radius_ = 0;
+  }
+  else
+  {
+    for(auto & i: node->children){
+      create_radii(i);
+    }
+    float circumference = 2 * std::accumulate(node->children.begin(), node->children.end(), float(), [](float init, std::shared_ptr<CTNode> const& node){return init + node->cone_radius_;}); 
+    if (circumference == 0)
+    {
+      circumference = node->children.size();
+    }
+    node->cone_radius_ = circumference /(2*PI);
+  }
+  return;
+}
+
+void ConeTree::create_angles(std::shared_ptr<CTNode> const& node, float index, float num_elements){
+  float a = index * 360/num_elements;
+  node->angle_ = a * PI / 180;
+
+  int i(0);
+  for(auto & n: node->children){
+    create_angles(n, i, node->children.size());
+    ++i;
+  }
+  return;
+}
+
+void ConeTree::set_layout()
+{
+  root_->pos = scm::math::vec3f(std::cos(root_->angle_),
+                                         -1,
+                                         std::sin(root_->angle_));
+  
+  std::queue< std::pair<std::shared_ptr<CTNode>, scm::math::vec3f> > queue; //node and parent pos.. not needed anymore
+
+  for( auto const& n: root_->children ){
+      queue.push(std::make_pair(n,root_->pos));
+  }
+
+  while(!queue.empty()){
+    auto current = queue.front();
+
+    current.first->pos = current.second + scm::math::vec3f(std::cos(current.first->angle_) * current.first->parent_->cone_radius_,
+                                                           -1,
+                                                           std::sin(current.first->angle_) * current.first->parent_->cone_radius_);
+
+    Logger::LOG_DEBUG << "id: " << current.first->id << std::endl
+      << " angle: " << current.first->angle_ << std::endl 
+      << " radius : " << current.first->cone_radius_ << std::endl 
+      << " pos: " << current.first->pos <<  std::endl
+      << " old_pos: " << current.second << std::endl;
+
+    for( std::shared_ptr<CTNode> const& n: current.first->children ){
+      queue.push(std::make_pair(n,current.first->pos));
+    }
+    queue.pop();
+  }
+}
+
+std::shared_ptr<CTNode> ConeTree::get_root() const
+{
+  return root_;
+}
+
+///////////////ConeTreeResource//////////////////////////////////////
+
+ConeTreeRessource::ConeTreeRessource(std::shared_ptr<CTNode> const& root, unsigned sphere_resolution)
     : vertices_lines_(), vertices_spheres_(),
       indices_lines_(), indices_spheres_(),
       vertex_array_lines_(), vertex_array_spheres_(),
@@ -72,14 +163,14 @@ ConeTreeRessource::ConeTreeRessource(CTNode const& root, unsigned sphere_resolut
       cone_tree_root_(root), num_nodes_(1), sphere_resolution_(64)
     {
 
-      // traverse the tree and count the number of nodes
-      std::queue<CTNode> queue;
+      // traverse the tree and count the number of num_nodes_
+      std::queue<std::shared_ptr<CTNode>> queue;
       queue.push(cone_tree_root_);
       while (!queue.empty())
       {
-        num_nodes_ += queue.front().children.size();
-        for (unsigned int i(0); i < queue.front().children.size(); ++i)
-          queue.push(queue.front().children[i]);
+        num_nodes_ += queue.front()->children.size();
+        for (unsigned int i(0); i < queue.front()->children.size(); ++i)
+          queue.push(queue.front()->children[i]);
         queue.pop();
       }
 
@@ -89,10 +180,10 @@ ConeTreeRessource::ConeTreeRessource(CTNode const& root, unsigned sphere_resolut
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ConeTreeRessource::bounding_box_expand(CTNode const& node)
+void ConeTreeRessource::bounding_box_expand(std::shared_ptr<CTNode> const& node)
 {
-  bounding_box_.expandBy(node.pos);
-  for(auto & i: node.children){
+  bounding_box_.expandBy(node->pos);
+  for(auto & i: node->children){
     bounding_box_expand(i);
   }
 }
@@ -183,26 +274,26 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
   Vertex* data(static_cast<Vertex*>(ctx.render_context->map_buffer(vertices_lines_[ctx.id], scm::gl::ACCESS_WRITE_INVALIDATE_BUFFER)));
 
 
-  std::queue<CTNode> queue; //queue to traverse the coneTree
+  std::queue<std::shared_ptr<CTNode>> queue; //queue to traverse the coneTree
   //first time to generate the lines
   queue.push(cone_tree_root_);
   while (!queue.empty())
   {
     //verticies
-    CTNode& current = queue.front();
+    std::shared_ptr<CTNode> current = queue.front();
 
-    data[current.id].pos = queue.front().pos;
-    data[current.id].tex = scm::math::vec2(0.f, 0.f);
-    data[current.id].normal = scm::math::vec3(0.f, 0.f, -1.f);
-    data[current.id].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[current.id].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[current->id].pos = queue.front()->pos;
+    data[current->id].tex = scm::math::vec2(0.f, 0.f);
+    data[current->id].normal = scm::math::vec3(0.f, 0.f, -1.f);
+    data[current->id].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[current->id].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
     //indices
-    for (unsigned int i(0); i < queue.front().children.size(); ++i)
+    for (unsigned int i(0); i < queue.front()->children.size(); ++i)
     {
-      queue.push(queue.front().children[i]);
-      index_array_lines.push_back(queue.front().id);
-      index_array_lines.push_back(queue.front().children[i].id);
+      queue.push(queue.front()->children[i]);
+      index_array_lines.push_back(queue.front()->id);
+      index_array_lines.push_back(queue.front()->children[i]->id);
     }
     queue.pop();
   }
@@ -222,23 +313,23 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
   while (!queue.empty())
   {
     //verticies
-    CTNode& current = queue.front();
+    std::shared_ptr<CTNode> current = queue.front();
     // TODO create copy of verts with changed positions
     for (int i = 0; i < num_verticies_for_sphere; i++){
-      unsigned index = num_verticies_for_sphere*current.id + i;
+      unsigned index = num_verticies_for_sphere*current->id + i;
       data2[index] = verts[i];
-      data2[index].pos = data2[index].pos + current.pos;
+      data2[index].pos = data2[index].pos + current->pos;
       // Logger::LOG_WARNING << "VERTEX: Current ID "<< current.id << "  Index: " << index << "  pos: " << data2[index].pos << std::endl;
     }
 
     for (int i = 0; i < num_indices_for_sphere; i++){
-      unsigned index = num_indices_for_sphere*current.id + i;
-      index_array_spheres.push_back(indis[i] + num_verticies_for_sphere*current.id);
+      unsigned index = num_indices_for_sphere*current->id + i;
+      index_array_spheres.push_back(indis[i] + num_verticies_for_sphere*current->id);
       // Logger::LOG_WARNING << "INDEX: Current ID "<< current.id << "  Index: " << index << "  Index: " << indis[i] + num_verticies_for_sphere*current.id << std::endl;
     }
     
 
-    for (auto const& child: current.children)
+    for (auto const& child: current->children)
       queue.push(child);
     queue.pop();
   }
@@ -295,16 +386,17 @@ void ConeTreeRessource::draw(RenderContext const& ctx) const {
   }
 
   scm::gl::context_vertex_input_guard vig(ctx.render_context);
-  scm::gl::context_state_objects_guard contex_guard(ctx.render_context);
+  {
+    scm::gl::context_state_objects_guard contex_guard(ctx.render_context);
 
-  ctx.render_context->set_rasterizer_state(rasterizer_state_, 10.0f);
-  
-  // Draw the Lines
-  ctx.render_context->bind_vertex_array(vertex_array_lines_[ctx.id]);
-  ctx.render_context->bind_index_buffer(indices_lines_[ctx.id], scm::gl::PRIMITIVE_LINE_LIST, scm::gl::TYPE_UINT);
-  ctx.render_context->apply();
-  ctx.render_context->draw_elements(100);  //TODO correct number
-
+    ctx.render_context->set_rasterizer_state(rasterizer_state_, 10.0f);
+    
+    // Draw the Lines
+    ctx.render_context->bind_vertex_array(vertex_array_lines_[ctx.id]);
+    ctx.render_context->bind_index_buffer(indices_lines_[ctx.id], scm::gl::PRIMITIVE_LINE_LIST, scm::gl::TYPE_UINT);
+    ctx.render_context->apply();
+    ctx.render_context->draw_elements(100);  //TODO correct number
+  }
   // Draw the Triangles (Spheres)
   ctx.render_context->bind_vertex_array(vertex_array_spheres_[ctx.id]);
   ctx.render_context->bind_index_buffer(indices_spheres_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
