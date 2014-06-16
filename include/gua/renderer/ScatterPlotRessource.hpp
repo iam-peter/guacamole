@@ -26,6 +26,7 @@
 #include <gua/platform.hpp>
 #include <gua/renderer/GeometryRessource.hpp>
 #include <gua/renderer/ScatterPlotUberShader.hpp>
+#include <gua/utils/DataSet.hpp>
 #include <gua/utils/KDTree.hpp>
 
 // external headers
@@ -56,7 +57,7 @@ class ScatterPlotRessource : public GeometryRessource {
    *
    * Creates a new and empty ScatterPlot.
    */
-   ScatterPlotRessource();
+   ScatterPlotRessource(std::shared_ptr<utils::DataSet> data);
 
   /**
    * Draws the Mesh.
@@ -83,6 +84,8 @@ class ScatterPlotRessource : public GeometryRessource {
  private:
 
   void upload_to(RenderContext const& context) const;
+
+  std::shared_ptr<utils::DataSet> data_;
 
   mutable std::vector<scm::gl::buffer_ptr> vertices_;
   mutable std::vector<scm::gl::buffer_ptr> indices_;

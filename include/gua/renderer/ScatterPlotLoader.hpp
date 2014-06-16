@@ -26,6 +26,7 @@
 #include <gua/renderer/ScatterPlotRessource.hpp>
 #include <gua/renderer/GeometryLoader.hpp>
 #include <gua/scenegraph/SceneGraph.hpp>
+#include <gua/utils/DataSet.hpp> 
 
 
 // external headers
@@ -60,7 +61,7 @@ public:
    /**
    *
    */
-   std::shared_ptr<Node> create(std::string const& node_name, std::string const& material);
+   std::shared_ptr<Node> create_from_csv(std::string const& node_name, std::string const& material, std::string const& filename, std::string const& separator = ",");
 
   /**
   *

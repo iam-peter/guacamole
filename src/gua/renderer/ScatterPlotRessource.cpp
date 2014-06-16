@@ -42,8 +42,8 @@ namespace gua {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ScatterPlotRessource::ScatterPlotRessource()
-    : vertices_(), indices_(), vertex_array_(), upload_mutex_() {
+ScatterPlotRessource::ScatterPlotRessource(std::shared_ptr<utils::DataSet> data)
+    : vertices_(), indices_(), vertex_array_(), upload_mutex_(), data_(data) {
   bounding_box_.expandBy(scm::math::vec3(-0.5, -0.5, -0.5));
   bounding_box_.expandBy(scm::math::vec3(0.5, 0.5, 0.5));
 }

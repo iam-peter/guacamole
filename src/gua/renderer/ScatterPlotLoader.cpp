@@ -23,6 +23,7 @@
 #include <gua/renderer/ScatterPlotLoader.hpp>
 
 // guacamole headers
+#include <gua/utils/DataSet.hpp>
 #include <gua/utils/TextFile.hpp>
 #include <gua/utils/Logger.hpp>
 #include <gua/utils/string_utils.hpp>
@@ -65,13 +66,21 @@ ScatterPlotLoader::ScatterPlotLoader()
   return node;
 }*/
 
-std::shared_ptr<Node> ScatterPlotLoader::create(std::string const& node_name,
-                                             std::string const& material)
+std::shared_ptr<Node> ScatterPlotLoader::create_from_csv(std::string const& node_name
+  , std::string const& material
+  , std::string const& file_name
+  , std::string const& separator)
 {
-  GeometryDatabase::instance()->add(node_name, std::make_shared<ScatterPlotRessource>());
-  
+  std::shared_ptr<utils::DataSet> data = std::make_shared<utils::DataSet>();
+
+  if (!data->load_from_csv(file_name, separator))
+  {
+    Logger::LOG_WARNING << "failed to load csv-file '" << file_name << "'!" << std::endl;
+  }
+
+  GeometryDatabase::instance()->add(node_name, std::make_shared<ScatterPlotRessource>(data));
+
   return std::make_shared<ScatterPlotNode>(node_name, node_name, material);
-  
 }
 
 ////////////////////////////////////////////////////////////////////////////////
