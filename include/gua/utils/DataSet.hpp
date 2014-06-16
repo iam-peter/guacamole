@@ -55,6 +55,8 @@ public:
 
 	void print_norm_data(std::ostream& stream);
 
+	std::shared_ptr<DataColumn> get_column_by_name(std::string const& colname) const;
+
 private:
 	std::vector<std::string> parse_csv_line(
 			std::string const& line

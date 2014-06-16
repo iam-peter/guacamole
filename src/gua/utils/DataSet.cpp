@@ -149,5 +149,14 @@ void DataSet::print_norm_data(std::ostream& stream)
 	}
 }
 
+std::shared_ptr<DataColumn> DataSet::get_column_by_name(std::string const& colname) const
+{
+	for (std::shared_ptr<DataColumn> col: columns_)
+		if (col->get_label() == colname)
+			return col;
+
+	Logger::LOG_ERROR << "requested column with label '" << colname << "' not found!" << std::endl;
+}
+
 }	// utils namespace
 }	// gua namespace
