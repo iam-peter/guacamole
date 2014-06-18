@@ -47,16 +47,20 @@ ScatterPlotRessource::ScatterPlotRessource(
     , std::shared_ptr<utils::DataColumn> ydata
     , std::shared_ptr<utils::DataColumn> zdata
   )
-  : vertices_()
-  , indices_()
-  , vertex_array_()
+  : point_vertices_()
+  , point_indices_()
+  , point_vertex_array_()
+  , axes_vertices_()
+  , axes_indices_()
+  , axes_vertex_array_()
   , upload_mutex_()
-  , num_vertices_(0)
+  , num_point_vertices_(0)
+  , num_axes_(2)
   , xdata_(xdata)
   , ydata_(ydata)
   , zdata_(zdata) {
 
-  num_vertices_ = std::min(xdata_->get_num_values(), ydata_->get_num_values());
+  num_point_vertices_ = std::min(xdata_->get_num_values(), ydata_->get_num_values());
 
   scm::math::vec3 min, max;
 
@@ -68,7 +72,8 @@ ScatterPlotRessource::ScatterPlotRessource(
 
   if (zdata_ != nullptr)
   {
-    num_vertices_ = std::min(zdata_->get_num_values(), num_vertices_);
+    num_point_vertices_ = std::min(zdata_->get_num_values(), num_point_vertices_);
+    num_axes_ = 3;
     min[2] = *std::min_element(zdata_->get_norm_values().begin(), zdata_->get_norm_values().end());
     max[2] = *std::max_element(zdata_->get_norm_values().begin(), zdata_->get_norm_values().end());
   }
@@ -85,63 +90,118 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
-  if (vertices_.size() <= ctx.id) {
-    vertices_.resize(ctx.id + 1);
-    indices_.resize(ctx.id + 1);
-    vertex_array_.resize(ctx.id + 1);
+  if (point_vertices_.size() <= ctx.id) {
+    point_vertices_.resize(ctx.id + 1);
+    point_indices_.resize(ctx.id + 1);
+    point_vertex_array_.resize(ctx.id + 1);
+    axes_vertices_.resize(ctx.id + 1);
+    axes_indices_.resize(ctx.id + 1);
+    axes_vertex_array_.resize(ctx.id + 1);
   }
 
   bool third_dim = (zdata_ != nullptr);
 
-  vertices_[ctx.id] =
+  point_vertices_[ctx.id] =
       ctx.render_device->create_buffer(scm::gl::BIND_VERTEX_BUFFER,
                                        scm::gl::USAGE_STATIC_DRAW,
-                                       num_vertices_ * sizeof(Vertex),
+                                       num_point_vertices_ * sizeof(Vertex),
+                                       0);
+  axes_vertices_[ctx.id] =
+      ctx.render_device->create_buffer(scm::gl::BIND_VERTEX_BUFFER,
+                                       scm::gl::USAGE_STATIC_DRAW,
+                                       (num_axes_ + 1) * sizeof(Vertex),
                                        0);
 
-  Vertex* data(static_cast<Vertex*>(ctx.render_context->map_buffer(
-      vertices_[ctx.id], scm::gl::ACCESS_WRITE_INVALIDATE_BUFFER)));
-
-  for (unsigned v(0); v < num_vertices_; ++v)
+  // set point vertices
+  Vertex* point_data(static_cast<Vertex*>(ctx.render_context->map_buffer(
+      point_vertices_[ctx.id], scm::gl::ACCESS_WRITE_INVALIDATE_BUFFER)));
+  for (unsigned v(0); v < num_point_vertices_; ++v)
   {
     float x = -0.5f + xdata_->get_norm_values()[v];
     float y = -0.5f + ydata_->get_norm_values()[v];
     float z = 0.0f;
     if (third_dim)
       z = 0.5f - zdata_->get_norm_values()[v];
-    data[v].pos = scm::math::vec3(x, y, z);
+    point_data[v].pos = scm::math::vec3(x, y, z);
 
     // set default values for the other vertex attribs
-    data[v].tex = scm::math::vec2(0.f, 0.f);
-    data[v].normal = scm::math::vec3(0.f, 0.f, 0.f);
-    data[v].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    data[v].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+    point_data[v].tex = scm::math::vec2(0.f, 0.f);
+    point_data[v].normal = scm::math::vec3(0.f, 0.f, 0.f);
+    point_data[v].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    point_data[v].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
   }
+  ctx.render_context->unmap_buffer(point_vertices_[ctx.id]);
 
-  ctx.render_context->unmap_buffer(vertices_[ctx.id]);
+  // set point indices
+  std::vector<unsigned> point_index_array(num_point_vertices_);
 
-  std::vector<unsigned> index_array(num_vertices_);
+  for (unsigned i(0); i < num_point_vertices_; ++i)
+    point_index_array[i] = i;
 
-  // TODO set indices
-  for (unsigned i(0); i < num_vertices_; ++i)
-    index_array[i] = i;
-
-  indices_[ctx.id] =
+  point_indices_[ctx.id] =
       ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
                                        scm::gl::USAGE_STATIC_DRAW,
-                                       num_vertices_ * sizeof(unsigned),
-                                       &index_array[0]);
+                                       num_point_vertices_ * sizeof(unsigned),
+                                       &point_index_array[0]);
 
-  std::vector<scm::gl::buffer_ptr> buffer_arrays;
-  buffer_arrays.push_back(vertices_[ctx.id]);
+  // set point vertex array
+  std::vector<scm::gl::buffer_ptr> point_buffer_arrays;
+  point_buffer_arrays.push_back(point_vertices_[ctx.id]);
 
-  vertex_array_[ctx.id] = ctx.render_device->create_vertex_array(
+  point_vertex_array_[ctx.id] = ctx.render_device->create_vertex_array(
       scm::gl::vertex_format(0, 0, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
           0, 1, scm::gl::TYPE_VEC2F, sizeof(Vertex))(
           0, 2, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
           0, 3, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
           0, 4, scm::gl::TYPE_VEC3F, sizeof(Vertex)),
-      buffer_arrays);
+      point_buffer_arrays);
+  Logger::LOG_MESSAGE << "points uploaded to context#" << ctx.id << std::endl;
+
+  // set axes vertices
+  Vertex* axes_data(static_cast<Vertex*>(ctx.render_context->map_buffer(
+      axes_vertices_[ctx.id], scm::gl::ACCESS_WRITE_INVALIDATE_BUFFER)));
+  scm::math::vec2 xrange = scm::math::vec2(-0.5, 0.5f);
+  scm::math::vec2 yrange = scm::math::vec2(-0.5, 0.5f);
+  scm::math::vec2 zrange = scm::math::vec2(0.0f, 0.0f);
+  if (third_dim)
+    zrange = scm::math::vec2(0.5, -0.5f);
+  axes_data[0].pos = scm::math::vec3(xrange[0], yrange[0], zrange[0]); // origin
+  axes_data[1].pos = scm::math::vec3(xrange[1], yrange[0], zrange[0]); // x-axis
+  axes_data[2].pos = scm::math::vec3(xrange[0], yrange[1], zrange[0]); // y-axis
+  axes_data[3].pos = scm::math::vec3(xrange[0], yrange[0], zrange[1]); // z-axis
+  ctx.render_context->unmap_buffer(axes_vertices_[ctx.id]);
+
+  // set axes indices
+  std::vector<unsigned> axes_index_array(num_axes_ * 2);
+
+  axes_index_array[0] = 0;
+  axes_index_array[1] = 1;  // x-axis
+  axes_index_array[2] = 0;
+  axes_index_array[3] = 2;  // y-axis
+  if (third_dim)
+  {
+    axes_index_array[4] = 0;
+    axes_index_array[5] = 3;  // z-axis
+  }
+
+  axes_indices_[ctx.id] =
+      ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
+                                       scm::gl::USAGE_STATIC_DRAW,
+                                       num_point_vertices_ * sizeof(unsigned),
+                                       &axes_index_array[0]);
+
+  // set axes vertex array
+  std::vector<scm::gl::buffer_ptr> axes_buffer_arrays;
+  axes_buffer_arrays.push_back(axes_vertices_[ctx.id]);
+
+  axes_vertex_array_[ctx.id] = ctx.render_device->create_vertex_array(
+      scm::gl::vertex_format(0, 0, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
+          0, 1, scm::gl::TYPE_VEC2F, sizeof(Vertex))(
+          0, 2, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
+          0, 3, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
+          0, 4, scm::gl::TYPE_VEC3F, sizeof(Vertex)),
+      axes_buffer_arrays);
+  Logger::LOG_MESSAGE << "axes uploaded to context#" << ctx.id << std::endl;
 
 }
 
@@ -150,21 +210,28 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
 void ScatterPlotRessource::draw(RenderContext const& ctx) const {
 
   // upload to GPU if neccessary
-  if (vertices_.size() <= ctx.id || vertices_[ctx.id] == nullptr) {
+  if (point_vertices_.size() <= ctx.id || point_vertices_[ctx.id] == nullptr) {
     upload_to(ctx);
   }
 
   scm::gl::context_vertex_input_guard vig(ctx.render_context);
   {
+    // set line and point size
     ctx.render_context->set_rasterizer_state(rasterizer_state_, 1.0f, 10.0f);
 
-    ctx.render_context->bind_vertex_array(vertex_array_[ctx.id]);
-
+    // draw points
+    ctx.render_context->bind_vertex_array(point_vertex_array_[ctx.id]);
     ctx.render_context->bind_index_buffer(
-        indices_[ctx.id], scm::gl::PRIMITIVE_POINT_LIST, scm::gl::TYPE_UINT);
-
+        point_indices_[ctx.id], scm::gl::PRIMITIVE_POINT_LIST, scm::gl::TYPE_UINT);
     ctx.render_context->apply();
-    ctx.render_context->draw_elements(num_vertices_);
+    ctx.render_context->draw_elements(num_point_vertices_);
+
+    // draw axes
+    ctx.render_context->bind_vertex_array(axes_vertex_array_[ctx.id]);
+    ctx.render_context->bind_index_buffer(
+        axes_indices_[ctx.id], scm::gl::PRIMITIVE_LINE_LIST, scm::gl::TYPE_UINT);
+    ctx.render_context->apply();
+    ctx.render_context->draw_elements(num_axes_ * 2);
   }
 }
 

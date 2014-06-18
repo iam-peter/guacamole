@@ -89,15 +89,19 @@ class ScatterPlotRessource : public GeometryRessource {
 
   void upload_to(RenderContext const& context) const;
 
-  unsigned int                        num_vertices_;
+  unsigned int  num_point_vertices_;
+  unsigned int  num_axes_;
 
   std::shared_ptr<utils::DataColumn>  xdata_;
   std::shared_ptr<utils::DataColumn>  ydata_;
   std::shared_ptr<utils::DataColumn>  zdata_;
 
-  mutable std::vector<scm::gl::buffer_ptr> vertices_;
-  mutable std::vector<scm::gl::buffer_ptr> indices_;
-  mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
+  mutable std::vector<scm::gl::buffer_ptr>        point_vertices_;
+  mutable std::vector<scm::gl::buffer_ptr>        point_indices_;
+  mutable std::vector<scm::gl::vertex_array_ptr>  point_vertex_array_;
+  mutable std::vector<scm::gl::buffer_ptr>        axes_vertices_;
+  mutable std::vector<scm::gl::buffer_ptr>        axes_indices_;
+  mutable std::vector<scm::gl::vertex_array_ptr>  axes_vertex_array_;
   mutable std::mutex upload_mutex_;
   mutable scm::gl::rasterizer_state_ptr rasterizer_state_;
 };
