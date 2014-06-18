@@ -81,7 +81,7 @@ std::shared_ptr<Node> ScatterPlotLoader::create_from_dataset(
   xdata = data_set.get_column_by_name(xattrib_name);
   ydata = data_set.get_column_by_name(yattrib_name);
   if (!zattrib_name.empty())
-    std::shared_ptr<utils::DataColumn> zdata = data_set.get_column_by_name(zattrib_name);
+    zdata = data_set.get_column_by_name(zattrib_name);
 
   GeometryDatabase::instance()->add(node_name, std::make_shared<ScatterPlotRessource>(xdata, ydata, zdata));
 

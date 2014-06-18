@@ -51,20 +51,19 @@ ScatterPlotRessource::ScatterPlotRessource(
   , indices_()
   , vertex_array_()
   , upload_mutex_()
+  , num_vertices_(0)
   , xdata_(xdata)
   , ydata_(ydata)
   , zdata_(zdata) {
   bounding_box_.expandBy(scm::math::vec3(-0.5, -0.5, -0.5));
   bounding_box_.expandBy(scm::math::vec3(0.5, 0.5, 0.5));
+  num_vertices_ = std::min(xdata_->get_num_values(), ydata_->get_num_values());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
 {
-
-  for (float f: xdata_->get_norm_values())
-    std::cout << f << std::endl;
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
@@ -74,32 +73,45 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
     vertex_array_.resize(ctx.id + 1);
   }
 
-  unsigned int numVertices = 0;
-  unsigned int numFaces = 0;
+  bool third_dim = (zdata_ != nullptr);
 
   vertices_[ctx.id] =
       ctx.render_device->create_buffer(scm::gl::BIND_VERTEX_BUFFER,
                                        scm::gl::USAGE_STATIC_DRAW,
-                                       numVertices * sizeof(Vertex),
+                                       num_vertices_ * sizeof(Vertex),
                                        0);
-
-
 
   Vertex* data(static_cast<Vertex*>(ctx.render_context->map_buffer(
       vertices_[ctx.id], scm::gl::ACCESS_WRITE_INVALIDATE_BUFFER)));
 
-  // TODO set vertices
+  for (unsigned v(0); v < num_vertices_; ++v)
+  {
+    float x = -0.5f + xdata_->get_norm_values()[v];
+    float y = -0.5f + ydata_->get_norm_values()[v];
+    float z = 0.0f;
+    if (third_dim)
+      z = 0.5f - zdata_->get_norm_values()[v];
+    data[v].pos = scm::math::vec3(x, y, z);
+
+    // set default values for the other vertex attribs
+    data[v].tex = scm::math::vec2(0.f, 0.f);
+    data[v].normal = scm::math::vec3(0.f, 0.f, 0.f);
+    data[v].tangent = scm::math::vec3(0.f, 0.f, 0.f);
+    data[v].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+  }
 
   ctx.render_context->unmap_buffer(vertices_[ctx.id]);
 
-  std::vector<unsigned> index_array(numFaces); // TODO init with correct amount of indices
+  std::vector<unsigned> index_array(num_vertices_);
 
   // TODO set indices
+  for (unsigned i(0); i < num_vertices_; ++i)
+    index_array[i] = i;
 
   indices_[ctx.id] =
       ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
                                        scm::gl::USAGE_STATIC_DRAW,
-                                       numFaces * sizeof(unsigned),
+                                       num_vertices_ * sizeof(unsigned),
                                        &index_array[0]);
 
   std::vector<scm::gl::buffer_ptr> buffer_arrays;
@@ -129,10 +141,10 @@ void ScatterPlotRessource::draw(RenderContext const& ctx) const {
   ctx.render_context->bind_vertex_array(vertex_array_[ctx.id]);
 
   ctx.render_context->bind_index_buffer(
-      indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
+      indices_[ctx.id], scm::gl::PRIMITIVE_POINT_LIST, scm::gl::TYPE_UINT);
 
   ctx.render_context->apply();
-  ctx.render_context->draw_elements(0);
+  ctx.render_context->draw_elements(num_vertices_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -168,16 +180,6 @@ void ScatterPlotRessource::ray_test(Ray const& ray, PickResult::Options options,
     face[j] = mesh_->mFaces[i].mIndices[j];
   return face;
 }*/
-
-////////////////////////////////////////////////////////////////////////////////
-
-void ScatterPlotRessource::set_attributes(std::string const& x_attrib_name, std::string const& y_attrib_name)
-{
-  auto xdata = dataset_->get_column_by_name(x_attrib_name);
-  if (xdata) xdata_ = xdata; else return;
-  auto ydata = dataset_->get_column_by_name(y_attrib_name);
-  if (ydata) ydata_ = ydata;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -32,9 +32,9 @@
 // external headers
 #include <scm/gl_core.h>
 
+#include <algorithm>
 #include <mutex>
 #include <thread>
-
 #include <vector>
 
 namespace gua {
@@ -75,8 +75,6 @@ class ScatterPlotRessource : public GeometryRessource {
   void ray_test(Ray const& ray, PickResult::Options options,
                 Node* owner, std::set<PickResult>& hits);
 
-  void set_attributes(std::string const& x_attrib_name, std::string const& y_attrib_name);
-
   //unsigned int num_vertices() const;
 
   //unsigned int num_faces() const;
@@ -91,7 +89,8 @@ class ScatterPlotRessource : public GeometryRessource {
 
   void upload_to(RenderContext const& context) const;
 
-  std::shared_ptr<utils::DataSet>     dataset_;
+  unsigned int                        num_vertices_;
+
   std::shared_ptr<utils::DataColumn>  xdata_;
   std::shared_ptr<utils::DataColumn>  ydata_;
   std::shared_ptr<utils::DataColumn>  zdata_;
