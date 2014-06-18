@@ -62,24 +62,16 @@ ScatterPlotRessource::ScatterPlotRessource(
 
   num_point_vertices_ = std::min(xdata_->get_num_values(), ydata_->get_num_values());
 
-  scm::math::vec3 min, max;
+  bounding_box_.expandBy(scm::math::vec3(-0.5f, -0.5f, 0.0f));
+  bounding_box_.expandBy(scm::math::vec3(0.5f, 0.5f, 0.0f));
 
-  min[0] = *std::min_element(xdata_->get_norm_values().begin(), xdata_->get_norm_values().end());
-  max[0] = *std::max_element(xdata_->get_norm_values().begin(), xdata_->get_norm_values().end());
-
-  min[1] = *std::min_element(ydata_->get_norm_values().begin(), ydata_->get_norm_values().end());
-  max[1] = *std::max_element(ydata_->get_norm_values().begin(), ydata_->get_norm_values().end());
-
-  if (zdata_ != nullptr)
+  if (zdata_ != nullptr)  // 3d-scatterplot
   {
     num_point_vertices_ = std::min(zdata_->get_num_values(), num_point_vertices_);
     num_axes_ = 3;
-    min[2] = *std::min_element(zdata_->get_norm_values().begin(), zdata_->get_norm_values().end());
-    max[2] = *std::max_element(zdata_->get_norm_values().begin(), zdata_->get_norm_values().end());
+    bounding_box_.expandBy(scm::math::vec3(0.0f, 0.0f, 0.5f));
+    bounding_box_.expandBy(scm::math::vec3(0.0f, 0.0f, -0.5f));
   }
-
-  bounding_box_.expandBy(min);
-  bounding_box_.expandBy(max); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
