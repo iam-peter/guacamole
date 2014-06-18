@@ -55,11 +55,26 @@ ScatterPlotRessource::ScatterPlotRessource(
   , xdata_(xdata)
   , ydata_(ydata)
   , zdata_(zdata) {
-  bounding_box_.expandBy(scm::math::vec3(-0.5, -0.5, -0.5));
-  bounding_box_.expandBy(scm::math::vec3(0.5, 0.5, 0.5));
+
   num_vertices_ = std::min(xdata_->get_num_values(), ydata_->get_num_values());
+
+  scm::math::vec3 min, max;
+
+  min[0] = *std::min_element(xdata_->get_norm_values().begin(), xdata_->get_norm_values().end());
+  max[0] = *std::max_element(xdata_->get_norm_values().begin(), xdata_->get_norm_values().end());
+
+  min[1] = *std::min_element(ydata_->get_norm_values().begin(), ydata_->get_norm_values().end());
+  max[1] = *std::max_element(ydata_->get_norm_values().begin(), ydata_->get_norm_values().end());
+
   if (zdata_ != nullptr)
+  {
     num_vertices_ = std::min(zdata_->get_num_values(), num_vertices_);
+    min[2] = *std::min_element(zdata_->get_norm_values().begin(), zdata_->get_norm_values().end());
+    max[2] = *std::max_element(zdata_->get_norm_values().begin(), zdata_->get_norm_values().end());
+  }
+
+  bounding_box_.expandBy(min);
+  bounding_box_.expandBy(max); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
