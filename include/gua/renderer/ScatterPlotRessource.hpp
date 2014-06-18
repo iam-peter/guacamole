@@ -99,6 +99,7 @@ class ScatterPlotRessource : public GeometryRessource {
   mutable std::vector<scm::gl::buffer_ptr> indices_;
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
   mutable std::mutex upload_mutex_;
+  mutable scm::gl::rasterizer_state_ptr rasterizer_state_;
 };
 
 }

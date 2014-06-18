@@ -64,6 +64,7 @@ ScatterPlotRessource::ScatterPlotRessource(
 
 void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
 {
+  rasterizer_state_ = ctx.render_device->create_rasterizer_state(scm::gl::FILL_SOLID, scm::gl::CULL_FRONT);
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
@@ -137,14 +138,17 @@ void ScatterPlotRessource::draw(RenderContext const& ctx) const {
   }
 
   scm::gl::context_vertex_input_guard vig(ctx.render_context);
+  {
+    ctx.render_context->set_rasterizer_state(rasterizer_state_, 1.0f, 10.0f);
 
-  ctx.render_context->bind_vertex_array(vertex_array_[ctx.id]);
+    ctx.render_context->bind_vertex_array(vertex_array_[ctx.id]);
 
-  ctx.render_context->bind_index_buffer(
-      indices_[ctx.id], scm::gl::PRIMITIVE_POINT_LIST, scm::gl::TYPE_UINT);
+    ctx.render_context->bind_index_buffer(
+        indices_[ctx.id], scm::gl::PRIMITIVE_POINT_LIST, scm::gl::TYPE_UINT);
 
-  ctx.render_context->apply();
-  ctx.render_context->draw_elements(num_vertices_);
+    ctx.render_context->apply();
+    ctx.render_context->draw_elements(num_vertices_);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
