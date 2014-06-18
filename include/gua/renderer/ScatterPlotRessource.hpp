@@ -57,7 +57,11 @@ class ScatterPlotRessource : public GeometryRessource {
    *
    * Creates a new and empty ScatterPlot.
    */
-   ScatterPlotRessource(std::shared_ptr<utils::DataSet> data);
+  ScatterPlotRessource(
+      std::shared_ptr<utils::DataColumn> xdata
+    , std::shared_ptr<utils::DataColumn> ydata
+    , std::shared_ptr<utils::DataColumn> zdata
+  );
 
   /**
    * Draws the Mesh.
@@ -70,6 +74,8 @@ class ScatterPlotRessource : public GeometryRessource {
 
   void ray_test(Ray const& ray, PickResult::Options options,
                 Node* owner, std::set<PickResult>& hits);
+
+  void set_attributes(std::string const& x_attrib_name, std::string const& y_attrib_name);
 
   //unsigned int num_vertices() const;
 
@@ -85,7 +91,10 @@ class ScatterPlotRessource : public GeometryRessource {
 
   void upload_to(RenderContext const& context) const;
 
-  std::shared_ptr<utils::DataSet> data_;
+  std::shared_ptr<utils::DataSet>     dataset_;
+  std::shared_ptr<utils::DataColumn>  xdata_;
+  std::shared_ptr<utils::DataColumn>  ydata_;
+  std::shared_ptr<utils::DataColumn>  zdata_;
 
   mutable std::vector<scm::gl::buffer_ptr> vertices_;
   mutable std::vector<scm::gl::buffer_ptr> indices_;

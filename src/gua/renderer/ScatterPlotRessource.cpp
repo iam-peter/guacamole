@@ -42,8 +42,18 @@ namespace gua {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ScatterPlotRessource::ScatterPlotRessource(std::shared_ptr<utils::DataSet> data)
-    : vertices_(), indices_(), vertex_array_(), upload_mutex_(), data_(data) {
+ScatterPlotRessource::ScatterPlotRessource(
+      std::shared_ptr<utils::DataColumn> xdata
+    , std::shared_ptr<utils::DataColumn> ydata
+    , std::shared_ptr<utils::DataColumn> zdata
+  )
+  : vertices_()
+  , indices_()
+  , vertex_array_()
+  , upload_mutex_()
+  , xdata_(xdata)
+  , ydata_(ydata)
+  , zdata_(zdata) {
   bounding_box_.expandBy(scm::math::vec3(-0.5, -0.5, -0.5));
   bounding_box_.expandBy(scm::math::vec3(0.5, 0.5, 0.5));
 }
@@ -52,6 +62,9 @@ ScatterPlotRessource::ScatterPlotRessource(std::shared_ptr<utils::DataSet> data)
 
 void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
 {
+
+  for (float f: xdata_->get_norm_values())
+    std::cout << f << std::endl;
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
@@ -155,6 +168,16 @@ void ScatterPlotRessource::ray_test(Ray const& ray, PickResult::Options options,
     face[j] = mesh_->mFaces[i].mIndices[j];
   return face;
 }*/
+
+////////////////////////////////////////////////////////////////////////////////
+
+void ScatterPlotRessource::set_attributes(std::string const& x_attrib_name, std::string const& y_attrib_name)
+{
+  auto xdata = dataset_->get_column_by_name(x_attrib_name);
+  if (xdata) xdata_ = xdata; else return;
+  auto ydata = dataset_->get_column_by_name(y_attrib_name);
+  if (ydata) ydata_ = ydata;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 

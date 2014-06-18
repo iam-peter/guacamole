@@ -156,6 +156,7 @@ std::shared_ptr<DataColumn> DataSet::get_column_by_name(std::string const& colna
 			return col;
 
 	Logger::LOG_ERROR << "requested column with label '" << colname << "' not found!" << std::endl;
+	return nullptr;
 }
 
 }	// utils namespace

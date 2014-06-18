@@ -46,7 +46,7 @@ namespace gua {
 /////////////////////////////////////////////////////////////////////////////
 
 ScatterPlotLoader::ScatterPlotLoader()
-  : GeometryLoader() 
+  : GeometryLoader()
 {}
 
 
@@ -66,19 +66,24 @@ ScatterPlotLoader::ScatterPlotLoader()
   return node;
 }*/
 
-std::shared_ptr<Node> ScatterPlotLoader::create_from_csv(std::string const& node_name
+std::shared_ptr<Node> ScatterPlotLoader::create_from_dataset(
+    std::string const& node_name
   , std::string const& material
-  , std::string const& file_name
-  , std::string const& separator)
+  , utils::DataSet const& data_set
+  , std::string const& xattrib_name
+  , std::string const& yattrib_name
+  , std::string const& zattrib_name
+  )
 {
-  std::shared_ptr<utils::DataSet> data = std::make_shared<utils::DataSet>();
+  std::shared_ptr<utils::DataColumn> xdata = nullptr;
+  std::shared_ptr<utils::DataColumn> ydata = nullptr;
+  std::shared_ptr<utils::DataColumn> zdata = nullptr;
+  xdata = data_set.get_column_by_name(xattrib_name);
+  ydata = data_set.get_column_by_name(yattrib_name);
+  if (!zattrib_name.empty())
+    std::shared_ptr<utils::DataColumn> zdata = data_set.get_column_by_name(zattrib_name);
 
-  if (!data->load_from_csv(file_name, separator))
-  {
-    Logger::LOG_WARNING << "failed to load csv-file '" << file_name << "'!" << std::endl;
-  }
-
-  GeometryDatabase::instance()->add(node_name, std::make_shared<ScatterPlotRessource>(data));
+  GeometryDatabase::instance()->add(node_name, std::make_shared<ScatterPlotRessource>(xdata, ydata, zdata));
 
   return std::make_shared<ScatterPlotNode>(node_name, node_name, material);
 }

@@ -61,14 +61,20 @@ public:
    /**
    *
    */
-   std::shared_ptr<Node> create_from_csv(std::string const& node_name, std::string const& material, std::string const& filename, std::string const& separator = ",");
-
+   std::shared_ptr<Node> create_from_dataset(
+      std::string const& node_name
+    , std::string const& material
+    , utils::DataSet const& data_set
+    , std::string const& xattrib_name
+    , std::string const& yattrib_name
+    , std::string const& zattrib_name = ""
+  );
   /**
   *
   */
   bool is_supported(std::string const& file_name) const;
 
- private: // methods
+private: // methods
 
   /*std::shared_ptr<Node> get_tree(std::shared_ptr<Assimp::Importer> const& importer,
                                  aiScene const* ai_scene,
