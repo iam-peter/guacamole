@@ -58,6 +58,8 @@ ScatterPlotRessource::ScatterPlotRessource(
   bounding_box_.expandBy(scm::math::vec3(-0.5, -0.5, -0.5));
   bounding_box_.expandBy(scm::math::vec3(0.5, 0.5, 0.5));
   num_vertices_ = std::min(xdata_->get_num_values(), ydata_->get_num_values());
+  if (zdata_ != nullptr)
+    num_vertices_ = std::min(zdata_->get_num_values(), num_vertices_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
