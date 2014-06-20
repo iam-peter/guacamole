@@ -53,14 +53,15 @@ struct RenderContext;
 
 struct CTNode {
   void create_layout(int depth, int num_elements, int i, scm::math::vec3f parent_pos);
-
   bool is_leaf() const;
+
   int id;
   scm::math::vec3f pos;
   std::shared_ptr<CTNode> parent_;
   std::vector<std::shared_ptr<CTNode>> children;
   
   float cone_radius_;
+  float cone_radius_adjusted_;
   float angle_;
   static int id_counter;
 };
@@ -69,12 +70,12 @@ class ConeTree{
 public:
   ConeTree(std::shared_ptr<CTNode> const& root);
   void create_layout();
+  std::shared_ptr<CTNode> get_root() const;
+private:
   void create_radii(std::shared_ptr<CTNode> const& node);
   void create_angles(std::shared_ptr<CTNode> const& node, float index, float num_elements);
   void set_layout();
   void debug() const;
-  std::shared_ptr<CTNode> get_root() const;
-private:
   std::shared_ptr<CTNode> root_;
 };
 

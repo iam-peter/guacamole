@@ -88,25 +88,43 @@ void ConeTree::create_radii(std::shared_ptr<CTNode> const& node){
 
   if(node->is_leaf()){
     node->cone_radius_ = 0;
+    node->cone_radius_adjusted_ = 0;
   }
   else
   {
     for(auto & i: node->children){
       create_radii(i);
     }
-    float circumference = 2 * std::accumulate(node->children.begin(), node->children.end(), float(), [](float init, std::shared_ptr<CTNode> const& node){return init + node->cone_radius_;}); 
+    float circumference = 2 * std::accumulate(node->children.begin(), node->children.end(), float(),
+                                    [](float init, std::shared_ptr<CTNode> const& node){return init + node->cone_radius_adjusted_;}); 
     if (circumference == 0)
     {
       circumference = node->children.size();
     }
     node->cone_radius_ = circumference /(2*PI);
+    // search the biggest child and add the radius to the adjusted Cone Radius
+    float max(0);
+    for(auto const& i: node->children){
+      if(i->cone_radius_adjusted_ > max){
+        max = i->cone_radius_adjusted_;
+      }
+    }
+    node->cone_radius_adjusted_ = node->cone_radius_ + max;
   }
   return;
 }
 
 void ConeTree::create_angles(std::shared_ptr<CTNode> const& node, float index, float num_elements){
-  float a = index * 360/num_elements;
-  node->angle_ = a * PI / 180;
+  
+  if (index == 0){
+    node->angle_ = 0;
+  }else{
+    float s(node->parent_->children[index-1]->cone_radius_adjusted_ + node->cone_radius_adjusted_);
+    node->angle_ = 2* PI *s / node->parent_->cone_radius_adjusted_ ;
+    Logger::LOG_DEBUG << "node->angle_: " << node->angle_ << std::endl;
+  }
+  // float a = index * 360/num_elements;
+  // node->angle_ = a * PI / 180; 
 
   int i(0);
   for(auto & n: node->children){
@@ -118,10 +136,14 @@ void ConeTree::create_angles(std::shared_ptr<CTNode> const& node, float index, f
 
 void ConeTree::set_layout()
 {
-  root_->pos = scm::math::vec3f(std::cos(root_->angle_),
-                                         -1,
-                                         std::sin(root_->angle_));
-  
+  root_->pos = scm::math::vec3f(0.0f, 0.0f, 0.0f);
+
+  Logger::LOG_DEBUG << "id: " << root_->id << std::endl
+      << " angle: " << root_->angle_ << std::endl 
+      << " Coneradius : " << root_->cone_radius_ << std::endl 
+      << " Coneradius adjusted : " << root_->cone_radius_adjusted_ << std::endl 
+      << " pos: " << root_->pos << std::endl;
+
   std::queue< std::pair<std::shared_ptr<CTNode>, scm::math::vec3f> > queue; //node and parent pos.. not needed anymore
 
   for( auto const& n: root_->children ){
@@ -129,16 +151,27 @@ void ConeTree::set_layout()
   }
 
   while(!queue.empty()){
-    auto current = queue.front();
+    auto current= queue.front();
 
-    current.first->pos = current.second + scm::math::vec3f(std::cos(current.first->angle_) * current.first->parent_->cone_radius_,
+    float angle_sum(0);
+    auto it = current.first->parent_->children.begin();
+    while ((*it)->id != current.first->id)
+    {
+      angle_sum += (*it)->angle_;
+      it++;
+    }
+    angle_sum += current.first->angle_;
+
+    current.first->pos = current.second + scm::math::vec3f(std::cos(angle_sum) * current.first->parent_->cone_radius_,
                                                            -1,
-                                                           std::sin(current.first->angle_) * current.first->parent_->cone_radius_);
+                                                           std::sin(angle_sum) * current.first->parent_->cone_radius_);
 
     Logger::LOG_DEBUG << "id: " << current.first->id << std::endl
       << " angle: " << current.first->angle_ << std::endl 
-      << " radius : " << current.first->cone_radius_ << std::endl 
-      << " pos: " << current.first->pos <<  std::endl
+      << " angle_sum: " << angle_sum << std::endl 
+      << " Coneradius : " << current.first->cone_radius_ << std::endl 
+      << " Coneradius adjusted : " << current.first->cone_radius_adjusted_ << std::endl 
+      << " pos: " << current.first->pos << std::endl
       << " old_pos: " << current.second << std::endl;
 
     for( std::shared_ptr<CTNode> const& n: current.first->children ){
@@ -284,7 +317,7 @@ void ConeTreeRessource::upload_to(RenderContext const& ctx) const
 
     data[current->id].pos = queue.front()->pos;
     data[current->id].tex = scm::math::vec2(0.f, 0.f);
-    data[current->id].normal = scm::math::vec3(0.f, 0.f, -1.f);
+    data[current->id].normal = scm::math::vec3(0.f, 1.f, 0.f);
     data[current->id].tangent = scm::math::vec3(0.f, 0.f, 0.f);
     data[current->id].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
 
@@ -389,13 +422,13 @@ void ConeTreeRessource::draw(RenderContext const& ctx) const {
   {
     scm::gl::context_state_objects_guard contex_guard(ctx.render_context);
 
-    ctx.render_context->set_rasterizer_state(rasterizer_state_, 10.0f);
+    ctx.render_context->set_rasterizer_state(rasterizer_state_, 5.0f);
     
     // Draw the Lines
     ctx.render_context->bind_vertex_array(vertex_array_lines_[ctx.id]);
     ctx.render_context->bind_index_buffer(indices_lines_[ctx.id], scm::gl::PRIMITIVE_LINE_LIST, scm::gl::TYPE_UINT);
     ctx.render_context->apply();
-    ctx.render_context->draw_elements(100);  //TODO correct number
+    ctx.render_context->draw_elements(100);  //TODO correct number -----------------------------------------------------------------------
   }
   // Draw the Triangles (Spheres)
   ctx.render_context->bind_vertex_array(vertex_array_spheres_[ctx.id]);
