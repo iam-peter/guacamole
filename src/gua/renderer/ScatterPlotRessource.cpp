@@ -54,14 +54,16 @@ ScatterPlotRessource::ScatterPlotRessource(
   , axes_indices_()
   , axes_vertex_array_()
   , upload_mutex_()
-  , cube_size_(0.1f, 0.1f, 0.001f)
-  , num_point_vertices_(0)
+  , cube_size_(0.01f, 0.01f, 0.0001f)
+  , num_indices_(0)
+  , num_points_(0)
   , num_axes_(2)
   , xdata_(xdata)
   , ydata_(ydata)
   , zdata_(zdata) {
 
-  num_point_vertices_ = std::min(xdata_->get_num_values(), ydata_->get_num_values());
+  num_points_ = std::min(xdata_->get_num_values(), ydata_->get_num_values());
+  num_indices_ = num_points_ * 6 * 2 * 3 ; // cube has 6 faces of 2 triangles
 
   bounding_box_.expandBy(scm::math::vec3(-0.5f, -0.5f, 0.0f));
   bounding_box_.expandBy(scm::math::vec3(0.5f, 0.5f, 0.0f));
@@ -69,7 +71,7 @@ ScatterPlotRessource::ScatterPlotRessource(
   if (zdata_ != nullptr)  // 3d-scatterplot
   {
     cube_size_[2] = cube_size_[0];
-    num_point_vertices_ = std::min(zdata_->get_num_values(), num_point_vertices_);
+    num_points_ = std::min(zdata_->get_num_values(), num_points_);
     num_axes_ = 3;
     bounding_box_.expandBy(scm::math::vec3(0.0f, 0.0f, 0.5f));
     bounding_box_.expandBy(scm::math::vec3(0.0f, 0.0f, -0.5f));
@@ -80,7 +82,7 @@ ScatterPlotRessource::ScatterPlotRessource(
 
 void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
 {
-  rasterizer_state_ = ctx.render_device->create_rasterizer_state(scm::gl::FILL_SOLID, scm::gl::CULL_FRONT);
+  rasterizer_state_ = ctx.render_device->create_rasterizer_state(scm::gl::FILL_SOLID, scm::gl::CULL_BACK);
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
@@ -95,10 +97,12 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
 
   bool third_dim = (zdata_ != nullptr);
 
+  unsigned int vertices_per_point = 6 * 4;   // 6 cube faces with each 4 vertices
+
   point_vertices_[ctx.id] =
       ctx.render_device->create_buffer(scm::gl::BIND_VERTEX_BUFFER,
                                        scm::gl::USAGE_STATIC_DRAW,
-                                       num_point_vertices_ * sizeof(Vertex),
+                                       num_points_ * vertices_per_point * sizeof(Vertex),
                                        0);
   axes_vertices_[ctx.id] =
       ctx.render_device->create_buffer(scm::gl::BIND_VERTEX_BUFFER,
@@ -109,33 +113,103 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
   // set point vertices
   Vertex* point_data(static_cast<Vertex*>(ctx.render_context->map_buffer(
       point_vertices_[ctx.id], scm::gl::ACCESS_WRITE_INVALIDATE_BUFFER)));
-  for (unsigned v(0); v < num_point_vertices_; ++v)
+
+  for (unsigned p(0); p < num_points_; ++p)
   {
-    float x = -0.5f + xdata_->get_norm_values()[v];
-    float y = -0.5f + ydata_->get_norm_values()[v];
+    float x = -0.5f + xdata_->get_norm_values()[p];
+    float y = -0.5f + ydata_->get_norm_values()[p];
     float z = 0.0f;
     if (third_dim)
-      z = 0.5f - zdata_->get_norm_values()[v];
-    point_data[v].pos = scm::math::vec3(x, y, z);
+      z = 0.5f - zdata_->get_norm_values()[p];
 
-    // set default values for the other vertex attribs
-    point_data[v].tex = scm::math::vec2(0.f, 0.f);
-    point_data[v].normal = scm::math::vec3(0.f, 0.f, 0.f);
-    point_data[v].tangent = scm::math::vec3(0.f, 0.f, 0.f);
-    point_data[v].bitangent = scm::math::vec3(0.f, 0.f, 0.f);
+    // front face
+    point_data[p * vertices_per_point + 0].pos = scm::math::vec3(x - cube_size_[0], y - cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 0].normal = scm::math::vec3(0, 0, 1);
+    point_data[p * vertices_per_point + 1].pos = scm::math::vec3(x + cube_size_[0], y - cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 1].normal = scm::math::vec3(0, 0, 1);
+    point_data[p * vertices_per_point + 2].pos = scm::math::vec3(x + cube_size_[0], y + cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 2].normal = scm::math::vec3(0, 0, 1);
+    point_data[p * vertices_per_point + 3].pos = scm::math::vec3(x - cube_size_[0], y + cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 3].normal = scm::math::vec3(0, 0, 1);
+
+
+    // back face
+    point_data[p * vertices_per_point + 4].pos = scm::math::vec3(x + cube_size_[0], y - cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 4].normal = scm::math::vec3(0, 0, -1);
+    point_data[p * vertices_per_point + 5].pos = scm::math::vec3(x - cube_size_[0], y - cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 5].normal = scm::math::vec3(0, 0, -1);
+    point_data[p * vertices_per_point + 6].pos = scm::math::vec3(x - cube_size_[0], y + cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 6].normal = scm::math::vec3(0, 0, -1);
+    point_data[p * vertices_per_point + 7].pos = scm::math::vec3(x + cube_size_[0], y + cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 7].normal = scm::math::vec3(0, 0, -1);
+    
+
+    // right face
+    point_data[p * vertices_per_point + 8].pos = scm::math::vec3(x + cube_size_[0], y - cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 8].normal = scm::math::vec3(1, 0, 0);
+    point_data[p * vertices_per_point + 9].pos = scm::math::vec3(x + cube_size_[0], y - cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 9].normal = scm::math::vec3(1, 0, 0);
+    point_data[p * vertices_per_point + 10].pos = scm::math::vec3(x + cube_size_[0], y + cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 10].normal = scm::math::vec3(1, 0, 0);
+    point_data[p * vertices_per_point + 11].pos = scm::math::vec3(x + cube_size_[0], y + cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 11].normal = scm::math::vec3(1, 0, 0);
+    
+
+    // left face
+    point_data[p * vertices_per_point + 12].pos = scm::math::vec3(x - cube_size_[0], y - cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 12].normal = scm::math::vec3(-1, 0, 0);
+    point_data[p * vertices_per_point + 13].pos = scm::math::vec3(x - cube_size_[0], y - cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 13].normal = scm::math::vec3(-1, 0, 0);
+    point_data[p * vertices_per_point + 14].pos = scm::math::vec3(x - cube_size_[0], y + cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 14].normal = scm::math::vec3(-1, 0, 0);
+    point_data[p * vertices_per_point + 15].pos = scm::math::vec3(x - cube_size_[0], y + cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 15].normal = scm::math::vec3(-1, 0, 0);
+
+    // top face
+    point_data[p * vertices_per_point + 16].pos = scm::math::vec3(x - cube_size_[0], y + cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 16].normal = scm::math::vec3(0, 1, 0);
+    point_data[p * vertices_per_point + 17].pos = scm::math::vec3(x + cube_size_[0], y + cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 17].normal = scm::math::vec3(0, 1, 0);
+    point_data[p * vertices_per_point + 18].pos = scm::math::vec3(x + cube_size_[0], y + cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 18].normal = scm::math::vec3(0, 1, 0);
+    point_data[p * vertices_per_point + 19].pos = scm::math::vec3(x - cube_size_[0], y + cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 19].normal = scm::math::vec3(0, 1, 0);
+
+    // bottom face
+    point_data[p * vertices_per_point + 20].pos = scm::math::vec3(x - cube_size_[0], y - cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 20].normal = scm::math::vec3(0, -1, 0);
+    point_data[p * vertices_per_point + 21].pos = scm::math::vec3(x + cube_size_[0], y - cube_size_[1], z - cube_size_[2]);
+    point_data[p * vertices_per_point + 21].normal = scm::math::vec3(0, -1, 0);
+    point_data[p * vertices_per_point + 22].pos = scm::math::vec3(x + cube_size_[0], y - cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 22].normal = scm::math::vec3(0, -1, 0);
+    point_data[p * vertices_per_point + 23].pos = scm::math::vec3(x - cube_size_[0], y - cube_size_[1], z + cube_size_[2]);
+    point_data[p * vertices_per_point + 23].normal = scm::math::vec3(0, -1, 0);
   }
   ctx.render_context->unmap_buffer(point_vertices_[ctx.id]);
 
   // set point indices
-  std::vector<unsigned> point_index_array(num_point_vertices_);
+  std::vector<unsigned> point_index_array(num_indices_);
 
-  for (unsigned i(0); i < num_point_vertices_; ++i)
-    point_index_array[i] = i;
+  for (unsigned p(0); p < num_points_; ++p)
+  {
+    for (unsigned f(0); f < 6; ++f) // for each of the cube's 6 faces
+    {
+      // lower left triangle
+      point_index_array[p * 36 + f * 6 + 0] = p * 24 + f * 4 + 0;
+      point_index_array[p * 36 + f * 6 + 1] = p * 24 + f * 4 + 1;
+      point_index_array[p * 36 + f * 6 + 2] = p * 24 + f * 4 + 3;
+
+      // upper rpght triangle
+      point_index_array[p * 36 + f * 6 + 3] = p * 24 + f * 4 + 1;
+      point_index_array[p * 36 + f * 6 + 4] = p * 24 + f * 4 + 2;
+      point_index_array[p * 36 + f * 6 + 5] = p * 24 + f * 4 + 3;
+    }
+  }
 
   point_indices_[ctx.id] =
       ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
                                        scm::gl::USAGE_STATIC_DRAW,
-                                       num_point_vertices_ * sizeof(unsigned),
+                                       num_indices_ * sizeof(unsigned),
                                        &point_index_array[0]);
 
   // set point vertex array
@@ -180,7 +254,7 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
   axes_indices_[ctx.id] =
       ctx.render_device->create_buffer(scm::gl::BIND_INDEX_BUFFER,
                                        scm::gl::USAGE_STATIC_DRAW,
-                                       num_point_vertices_ * sizeof(unsigned),
+                                       num_axes_ * 2 * sizeof(unsigned),
                                        &axes_index_array[0]);
 
   // set axes vertex array
@@ -214,9 +288,9 @@ void ScatterPlotRessource::draw(RenderContext const& ctx) const {
     // draw points
     ctx.render_context->bind_vertex_array(point_vertex_array_[ctx.id]);
     ctx.render_context->bind_index_buffer(
-        point_indices_[ctx.id], scm::gl::PRIMITIVE_POINT_LIST, scm::gl::TYPE_UINT);
+        point_indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
     ctx.render_context->apply();
-    ctx.render_context->draw_elements(num_point_vertices_);
+    ctx.render_context->draw_elements(num_indices_);
 
     // draw axes
     ctx.render_context->bind_vertex_array(axes_vertex_array_[ctx.id]);

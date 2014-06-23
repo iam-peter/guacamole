@@ -89,7 +89,10 @@ class ScatterPlotRessource : public GeometryRessource {
 
   void upload_to(RenderContext const& context) const;
 
-  unsigned int  num_point_vertices_;
+  scm::math::vec3f  cube_size_;
+
+  unsigned int  num_indices_;
+  unsigned int  num_points_;
   unsigned int  num_axes_;
 
   std::shared_ptr<utils::DataColumn>  xdata_;
