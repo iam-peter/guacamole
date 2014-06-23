@@ -54,6 +54,7 @@ ScatterPlotRessource::ScatterPlotRessource(
   , axes_indices_()
   , axes_vertex_array_()
   , upload_mutex_()
+  , cube_size_(0.1f, 0.1f, 0.001f)
   , num_point_vertices_(0)
   , num_axes_(2)
   , xdata_(xdata)
@@ -67,6 +68,7 @@ ScatterPlotRessource::ScatterPlotRessource(
 
   if (zdata_ != nullptr)  // 3d-scatterplot
   {
+    cube_size_[2] = cube_size_[0];
     num_point_vertices_ = std::min(zdata_->get_num_values(), num_point_vertices_);
     num_axes_ = 3;
     bounding_box_.expandBy(scm::math::vec3(0.0f, 0.0f, 0.5f));
