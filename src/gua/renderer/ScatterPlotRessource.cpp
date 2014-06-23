@@ -147,7 +147,6 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
           0, 3, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
           0, 4, scm::gl::TYPE_VEC3F, sizeof(Vertex)),
       point_buffer_arrays);
-  Logger::LOG_MESSAGE << "points uploaded to context#" << ctx.id << std::endl;
 
   // set axes vertices
   Vertex* axes_data(static_cast<Vertex*>(ctx.render_context->map_buffer(
@@ -193,7 +192,6 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
           0, 3, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
           0, 4, scm::gl::TYPE_VEC3F, sizeof(Vertex)),
       axes_buffer_arrays);
-  Logger::LOG_MESSAGE << "axes uploaded to context#" << ctx.id << std::endl;
 
 }
 
