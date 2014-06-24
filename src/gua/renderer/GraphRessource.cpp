@@ -82,6 +82,17 @@ GraphRessource::GraphRessource(aiMesh* mesh, std::shared_ptr<Assimp::Importer> c
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#define GRAPH true
+
+#if GRAPH
+
+void GraphRessource::upload_to(RenderContext const& ctx) const
+{
+	
+}
+
+#else
+
 void GraphRessource::upload_to(RenderContext const& ctx) const {
 
   if (!mesh_->HasPositions()) {
@@ -169,6 +180,8 @@ void GraphRessource::upload_to(RenderContext const& ctx) const {
       buffer_arrays);
 
 }
+
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 
