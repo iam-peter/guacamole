@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * guacamole - delicious VR                                                   *
  *                                                                            *
@@ -25,39 +26,26 @@
 // guacamole headers
 #include <gua/scenegraph/GeometryNode.hpp>
 
-namespace gua {
+namespace gua
+{
 
-/**
- * This class is used to represent polygonal geometry in the SceneGraph.
- *
- * \ingroup gua_scenegraph
- */
-class GUA_DLL GraphNode : public GeometryNode {
- public:  // member
+class GUA_DLL GraphNode : public GeometryNode
+{
+	public :
 
   GraphNode(std::string const& name,
-              std::string const& geometry = "gua_default_geometry",
-              std::string const& material = "gua_default_material",
-              math::mat4 const& transform = math::mat4::identity());
+            std::string const& geometry  = "gua_default_geometry",
+            std::string const& material  = "gua_default_material",
+            math::mat4  const& transform = math::mat4::identity());
 
-  /**
-  * Implements ray picking for a triangular mesh
-  */
-  /* virtual */ void ray_test_impl(RayNode const& ray,
-                                   PickResult::Options options,
-                                   Mask const& mask,
-                                   std::set<PickResult>& hits);
+	void update_cache();
 
-  /* virtual */ void update_cache();
+	protected:
 
- protected:
-
-  /*virtual*/ std::shared_ptr<Node> copy() const;
-
- private:  // attributes e.g. special attributes for drawing
-
+	std::shared_ptr<Node> copy() const;
 };
 
 }
 
-#endif  // GUA_GRAPH_NODE_HPP
+#endif
+

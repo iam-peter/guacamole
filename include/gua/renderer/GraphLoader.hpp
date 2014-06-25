@@ -31,76 +31,23 @@
 #include <list>
 #include <memory>
 
-#if ASSIMP_VERSION == 3
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
-#else
-#include <assimp/assimp.hpp>
-#include <assimp/aiPostProcess.h>
-#include <assimp/aiScene.h>
-#endif
-
-namespace Assimp { class Importer; }
-
-namespace gua {
+namespace gua 
+{
 
 class Node;
 class InnerNode;
 class GeometryNode;
 
 class GUA_DLL GraphLoader : public GeometryLoader 
-{
+{	
 	public: 
 
-	enum Flags 
-	{
-     DEFAULTS = 0,
-     LOAD_MATERIALS = 1 << 0,
-     OPTIMIZE_GEOMETRY = 1 << 1,
-     MAKE_PICKABLE = 1 << 2,
-     NORMALIZE_POSITION = 1 << 3,
-     NORMALIZE_SCALE = 1 << 4
-   };
+	GraphLoader();
 
-   GraphLoader();
-
-   std::shared_ptr<Node> load_geometry(std::string const& file_name, unsigned flags = DEFAULTS);
-
-   std::shared_ptr<Node> create_geometry_from_file(std::string const& node_name,
-                                                   std::string const& file_name,
-                                                   std::string const& fallback_material,
-                                                   unsigned flags = DEFAULTS);
-
-  std::shared_ptr<Node> load(std::string const& file_name,unsigned flags);
-
-  std::vector<GraphRessource*> const load_from_buffer(char const* buffer_name,
-                                                      unsigned buffer_size,
-                                                      bool build_kd_tree);
-
-  bool is_supported(std::string const& file_name) const;
-
-	private :
-
-  std::shared_ptr<Node> get_tree(std::shared_ptr<Assimp::Importer> const& importer,
-                								 aiScene const* ai_scene,
-                								 aiNode* ai_root,
-                								 std::string const& file_name,
-                  						   unsigned flags,
-																 unsigned& mesh_count);
-
-  void apply_fallback_material(std::shared_ptr<Node> const& root, std::string const& fallback_material) const;
-
-
-  std::string parent_material_name_;
-
-  unsigned node_counter_;
-
-  static std::unordered_map<std::string, std::shared_ptr<Node>> loaded_files_;
-  static unsigned mesh_counter_;
+	bool is_supported(std::string const& file_name) const;
 };
 
 }
 
-#endif  // GUA_GRAPH_LOADER_HPP
+#endif
 

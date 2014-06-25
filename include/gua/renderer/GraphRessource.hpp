@@ -26,7 +26,6 @@
 #include <gua/platform.hpp>
 #include <gua/renderer/GeometryRessource.hpp>
 #include <gua/renderer/GraphUberShader.hpp>
-#include <gua/utils/KDTree.hpp>
 
 // external headers
 #include <scm/gl_core.h>
@@ -36,64 +35,27 @@
 
 #include <vector>
 
-struct aiMesh;
-
-namespace Assimp { class Importer; }
-
-namespace gua {
+namespace gua
+{
 
 struct RenderContext;
 
-/**
- * Stores geometry data.
- *
- * A mesh can be loaded from an Assimp mesh and the draw onto multiple
- * contexts.
- * Do not use this class directly, it is just used by the Geometry class to
- * store the individual meshes of a file.
- */
-class GraphRessource : public GeometryRessource {
- public:
+class GraphRessource : public GeometryRessource
+{
+	public:
 
-  /**
-   * Default constructor.
-   *
-   * Creates a new and empty Mesh.
-   */
-   GraphRessource();
+	GraphRessource();
 
-  /**
-   * Constructor from an Assimp mesh.
-   *
-   * Initializes the mesh from a given Assimp mesh.
-   *
-   * \param mesh             The Assimp mesh to load the data from.
-   */
-   GraphRessource(aiMesh* mesh, std::shared_ptr<Assimp::Importer> const& importer, bool build_kd_tree);
-
-  /**
-   * Draws the Mesh.
-   *
-   * Draws the Mesh to the given context.
-   *
-   * \param context          The RenderContext to draw onto.
-   */
   void draw(RenderContext const& context) const;
 
-  void ray_test(Ray const& ray, PickResult::Options options,
-                Node* owner, std::set<PickResult>& hits);
+  void ray_test(Ray const& ray,
+								PickResult::Options options,
+                Node* owner, 
+								std::set<PickResult>& hits);
 
-  unsigned int num_vertices() const;
+  std::shared_ptr<GeometryUberShader> create_ubershader() const;
 
-  unsigned int num_faces() const;
-
-  scm::math::vec3 get_vertex(unsigned int i) const;
-
-  std::vector<unsigned int> get_face(unsigned int i) const;
-
-  /*virtual*/ std::shared_ptr<GeometryUberShader> create_ubershader() const;
-
- private:
+	private:
 
   void upload_to(RenderContext const& context) const;
 
@@ -101,15 +63,9 @@ class GraphRessource : public GeometryRessource {
   mutable std::vector<scm::gl::buffer_ptr> indices_;
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
   mutable std::mutex upload_mutex_;
-
- public:
-
-  KDTree kd_tree_;
-
-  aiMesh* mesh_;
-  std::shared_ptr<Assimp::Importer> importer_;
 };
 
 }
 
-#endif  // GUA_GRAPH_RESSOURCE_HPP
+#endif
+
