@@ -44,6 +44,8 @@ class GUA_DLL GraphLoader : public GeometryLoader
 
 	GraphLoader();
 
+	std::shared_ptr<Node> create(std::string const& name,std::string const& mat);
+
 	bool is_supported(std::string const& file_name) const;
 };
 

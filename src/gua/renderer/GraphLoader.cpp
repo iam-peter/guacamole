@@ -22,11 +22,27 @@
 // class header
 #include <gua/renderer/GraphLoader.hpp>
 
+#include <gua/databases/GeometryDatabase.hpp>
+#include <gua/databases/MaterialDatabase.hpp>
+#include <gua/scenegraph/GraphNode.hpp>
+
 namespace gua
 {
   GraphLoader::GraphLoader() :
 	GeometryLoader()
   {}
+
+	std::shared_ptr<Node>
+
+	GraphLoader::create(std::string const& name,std::string const& mat)
+	{
+		GeometryDatabase::instance()->add(name,std::make_shared<GraphRessource>());
+		MaterialDatabase::instance()->load_material(mat);
+
+		std::shared_ptr<Node> node = std::make_shared<GraphNode>(name,name,mat);
+
+		return node;
+	}
 
 	bool GraphLoader::is_supported(std::string const& file_name) const
 	{

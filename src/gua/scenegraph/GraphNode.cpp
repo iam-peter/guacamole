@@ -32,7 +32,7 @@ namespace gua
                        std::string const& filename,
                        std::string const& material,
                        math::mat4 const& transform) :
-	GeometryNode(name, filename, material, transform)
+	GeometryNode(name, filename, material)
   {}
 
   void GraphNode::update_cache()

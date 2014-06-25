@@ -35,6 +35,17 @@
 
 #include <vector>
 
+namespace 
+{
+
+struct Vertex
+{
+  scm::math::vec3f pos;
+  scm::math::vec3f normal;
+};
+
+}
+
 namespace gua
 {
 
@@ -57,12 +68,23 @@ class GraphRessource : public GeometryRessource
 
 	private:
 
+	std::vector<Vertex> const generate_sphere_vertices(unsigned int rings,
+												 														 unsigned int sectors,
+												 														 float radius = 1.0) const;
+
+	std::vector<unsigned> const 
+
+	generate_sphere_indices(unsigned int rings,unsigned int sectors) const;
+
   void upload_to(RenderContext const& context) const;
+
 
   mutable std::vector<scm::gl::buffer_ptr> vertices_;
   mutable std::vector<scm::gl::buffer_ptr> indices_;
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
   mutable std::mutex upload_mutex_;
+
+	mutable unsigned short face_number_;
 };
 
 }
