@@ -75,14 +75,6 @@ class ScatterPlotRessource : public GeometryRessource {
   void ray_test(Ray const& ray, PickResult::Options options,
                 node::Node* owner, std::set<PickResult>& hits);
 
-  //unsigned int num_vertices() const;
-
-  //unsigned int num_faces() const;
-
-  //scm::math::vec3 get_vertex(unsigned int i) const;
-
-  //std::vector<unsigned int> get_face(unsigned int i) const;
-
   /*virtual*/ std::shared_ptr<GeometryUberShader> create_ubershader() const;
 
  private:
@@ -93,7 +85,6 @@ class ScatterPlotRessource : public GeometryRessource {
 
   unsigned int  num_indices_;
   unsigned int  num_points_;
-  unsigned int  num_axes_;
 
   std::shared_ptr<utils::DataColumn>  xdata_;
   std::shared_ptr<utils::DataColumn>  ydata_;
@@ -102,9 +93,7 @@ class ScatterPlotRessource : public GeometryRessource {
   mutable std::vector<scm::gl::buffer_ptr>        point_vertices_;
   mutable std::vector<scm::gl::buffer_ptr>        point_indices_;
   mutable std::vector<scm::gl::vertex_array_ptr>  point_vertex_array_;
-  mutable std::vector<scm::gl::buffer_ptr>        axes_vertices_;
-  mutable std::vector<scm::gl::buffer_ptr>        axes_indices_;
-  mutable std::vector<scm::gl::vertex_array_ptr>  axes_vertex_array_;
+
   mutable std::mutex upload_mutex_;
   mutable scm::gl::rasterizer_state_ptr rasterizer_state_;
 };
