@@ -63,12 +63,15 @@ public:
    /**
    *
    */
-   std::shared_ptr<node::Node> create_from_dataset(
+   std::shared_ptr<node::Node> create_from_csvfile(
       std::string const& node_name
     , std::string const& material
-    , utils::DataSet const& data_set
-    , std::string const& xattrib_name
-    , std::string const& yattrib_name
+    , std::string const& csv_file_name
+    , std::string const& separator = ","
+    , std::string const& escape = "\\"
+    , std::string const& quote = "\""
+    , std::string const& xattrib_name = ""
+    , std::string const& yattrib_name = ""
     , std::string const& zattrib_name = ""
   );
   /**
