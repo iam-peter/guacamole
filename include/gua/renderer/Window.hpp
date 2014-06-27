@@ -32,6 +32,7 @@
 #include <gua/utils/configuration_macro.hpp>
 
 // external headers
+#include <atomic>
 #include <memory>
 #include <string>
 #include <scm/gl_util/primitives/quad.h>
@@ -79,6 +80,7 @@ class GUA_DLL Window {
     GUA_ADD_PROPERTY(math::vec2ui, right_resolution, math::vec2ui(800, 600));
     GUA_ADD_PROPERTY(math::vec2ui, right_position, math::vec2ui(0, 0));
     GUA_ADD_PROPERTY(bool, enable_vsync, true);
+    GUA_ADD_PROPERTY(bool, debug, false);
     GUA_ADD_PROPERTY(std::string, warp_matrix_red_right, "");
     GUA_ADD_PROPERTY(std::string, warp_matrix_green_right, "");
     GUA_ADD_PROPERTY(std::string, warp_matrix_blue_right, "");
@@ -152,6 +154,14 @@ class GUA_DLL Window {
   RenderContext* get_context();
 
 protected:
+  
+  struct DebugOutput : public scm::gl::render_context::debug_output {
+    /*virtual*/ void operator()(scm::gl::debug_source source, 
+                                scm::gl::debug_type type, 
+                                scm::gl::debug_severity severity, 
+                                const std::string& message) const;
+  };
+
   ShaderProgram fullscreen_shader_;
   scm::gl::quad_geometry_ptr fullscreen_quad_;
 
@@ -168,7 +178,9 @@ protected:
                bool clear = true);
 
 
-  static unsigned last_context_id_;
+  static std::atomic_uint last_context_id_;
+
+  static std::mutex last_context_id_mutex_;
 
   std::shared_ptr<WarpMatrix> warpRR_, warpGR_, warpBR_, warpRL_, warpGL_, warpBL_;
 };

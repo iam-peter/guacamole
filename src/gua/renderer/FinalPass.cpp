@@ -72,14 +72,9 @@ void FinalPass::set_uniforms(SerializedScene const& scene,
                        static_cast<int>(pipeline_->config.background_mode()),
                        "gua_background_mode");
 
-  if (pipeline_->config.background_mode() == Pipeline::BackgroundMode::COLOR || pipeline_->config.background_texture() == "")
-    shader_->set_uniform(
-        ctx, pipeline_->config.background_color(), "gua_background_color");
-  else
-    shader_->set_uniform(ctx,
-                         TextureDatabase::instance()->lookup(
-                             pipeline_->config.background_texture()),
-                         "gua_background_texture");
+  if (pipeline_->config.background_mode() == Pipeline::BackgroundMode::COLOR || pipeline_->config.background_texture() == "") {
+    shader_->set_uniform(ctx, pipeline_->config.background_color(), "gua_background_color");
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -90,14 +85,45 @@ LayerMapping const* FinalPass::get_gbuffer_mapping() const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void FinalPass::pre_rendering(Camera const& camera,
+                                   SerializedScene const& scene,
+                                   CameraMode eye,
+                                   RenderContext const& ctx) {
+
+  if (pipeline_->config.background_mode() != Pipeline::BackgroundMode::COLOR && pipeline_->config.background_texture() != "") {
+    if (pipeline_->config.enable_stereo() && TextureDatabase::instance()->is_supported(pipeline_->config.background_texture() + "_right")) {
+      if (eye == CameraMode::RIGHT) {
+        shader_->set_uniform(ctx, TextureDatabase::instance()->lookup(
+                                      pipeline_->config.background_texture() + "_right"),
+                                      "gua_background_texture");
+      } else {
+        shader_->set_uniform(ctx, TextureDatabase::instance()->lookup(
+                                      pipeline_->config.background_texture() + "_left"),
+                                      "gua_background_texture");
+      }
+    } else {
+      shader_->set_uniform(ctx, TextureDatabase::instance()->lookup(
+                                    pipeline_->config.background_texture()),
+                                    "gua_background_texture");
+    }
+  }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 /* virtual */ void FinalPass::rendering(Camera const& camera,
                                         SerializedScene const& scene,
                                         CameraMode eye,
                                         RenderContext const& ctx) {
 
   Pass::bind_inputs(*shader_->get_program(), eye, ctx);
-  Pass::set_camera_matrices(
-    *shader_->get_program(), camera, pipeline_->get_current_scene(eye), eye, ctx);
+  shader_->get_program()->set_uniform(ctx, static_cast<int>(eye), "gua_eye");
+  if (eye == CameraMode::LEFT || eye == CameraMode::CENTER) {
+    ctx.render_context->bind_uniform_buffer(pipeline_->camera_block_left_->block().block_buffer(), 0);
+  } else {
+    ctx.render_context->bind_uniform_buffer(pipeline_->camera_block_right_->block().block_buffer(), 0);
+  }
 
   shader_->get_program()->use(ctx);
   fullscreen_quad_->draw(ctx.render_context);
