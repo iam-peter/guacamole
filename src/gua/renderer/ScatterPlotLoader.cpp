@@ -42,6 +42,8 @@
 
 namespace gua {
 
+std::map<std::string, std::shared_ptr<utils::DataSet>> ScatterPlotLoader::loaded_csvs_;
+
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -83,15 +85,26 @@ std::shared_ptr<node::Node> ScatterPlotLoader::create_from_csvfile(
   std::shared_ptr<utils::DataColumn> ydata = nullptr;
   std::shared_ptr<utils::DataColumn> zdata = nullptr;
 
-  utils::DataSet data_set;
-  data_set.load_from_csv(csv_file_name, separator, escape, quote);
+  auto cached_csv_data = ScatterPlotLoader::loaded_csvs_.find(csv_file_name);
+  std::shared_ptr<utils::DataSet> csv_data;
+
+  // csv-file was not loaded yet, load it and cache its data
+  if (cached_csv_data == loaded_csvs_.end())
+  {
+    csv_data = std::make_shared<utils::DataSet>();
+    csv_data->load_from_csv(csv_file_name, separator, escape, quote);
+    ScatterPlotLoader::loaded_csvs_.insert(std::pair<std::string, std::shared_ptr<utils::DataSet>>(csv_file_name, csv_data));
+  } else
+    csv_data = cached_csv_data->second;
+
+  // TODO load first/second/third attribute when no attribute name is given
 
   if (!xattrib_name.empty())
-    xdata = data_set.get_column_by_name(xattrib_name);
+    xdata = csv_data->get_column_by_name(xattrib_name);
   if (!yattrib_name.empty())
-    ydata = data_set.get_column_by_name(yattrib_name);
+    ydata = csv_data->get_column_by_name(yattrib_name);
   if (!zattrib_name.empty())
-    zdata = data_set.get_column_by_name(zattrib_name);
+    zdata = csv_data->get_column_by_name(zattrib_name);
 
   GeometryDatabase::instance()->add(node_name, std::make_shared<ScatterPlotRessource>(xdata, ydata, zdata));
 

@@ -30,6 +30,7 @@
 
 
 // external headers
+#include <map>
 #include <string>
 #include <list>
 #include <memory>
@@ -80,6 +81,8 @@ public:
   bool is_supported(std::string const& file_name) const;
 
 private: // methods
+
+  static std::map<std::string, std::shared_ptr<utils::DataSet>>  loaded_csvs_;
 
   /*std::shared_ptr<Node> get_tree(std::shared_ptr<Assimp::Importer> const& importer,
                                  aiScene const* ai_scene,
