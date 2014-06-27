@@ -27,8 +27,8 @@
 #include <gua/utils/TextFile.hpp>
 #include <gua/utils/Logger.hpp>
 #include <gua/utils/string_utils.hpp>
-#include <gua/scenegraph/ScatterPlotNode.hpp>
-#include <gua/scenegraph/TransformNode.hpp>
+#include <gua/node/ScatterPlotNode.hpp>
+#include <gua/node/TransformNode.hpp>
 #include <gua/renderer/Material.hpp>
 #include <gua/renderer/MaterialLoader.hpp>
 #include <gua/renderer/ScatterPlotLoader.hpp>
@@ -66,7 +66,7 @@ ScatterPlotLoader::ScatterPlotLoader()
   return node;
 }*/
 
-std::shared_ptr<Node> ScatterPlotLoader::create_from_dataset(
+std::shared_ptr<node::Node> ScatterPlotLoader::create_from_dataset(
     std::string const& node_name
   , std::string const& material
   , utils::DataSet const& data_set
@@ -85,7 +85,7 @@ std::shared_ptr<Node> ScatterPlotLoader::create_from_dataset(
 
   GeometryDatabase::instance()->add(node_name, std::make_shared<ScatterPlotRessource>(xdata, ydata, zdata));
 
-  return std::make_shared<ScatterPlotNode>(node_name, node_name, material);
+  return std::make_shared<node::ScatterPlotNode>(node_name, node_name, material);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

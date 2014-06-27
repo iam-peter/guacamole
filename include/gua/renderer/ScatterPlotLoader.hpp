@@ -36,9 +36,11 @@
 
 namespace gua {
 
+namespace node {
 class Node;
 class InnerNode;
 class GeometryNode;
+}
 
 /**
  * Loads and draws meshes.
@@ -61,7 +63,7 @@ public:
    /**
    *
    */
-   std::shared_ptr<Node> create_from_dataset(
+   std::shared_ptr<node::Node> create_from_dataset(
       std::string const& node_name
     , std::string const& material
     , utils::DataSet const& data_set

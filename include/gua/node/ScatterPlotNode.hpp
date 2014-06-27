@@ -23,9 +23,10 @@
 #define GUA_SCATTER_PLOT_NODE_HPP
 
 // guacamole headers
-#include <gua/scenegraph/GeometryNode.hpp>
+#include <gua/node/GeometryNode.hpp>
 
 namespace gua {
+namespace node {
 
 /**
  * This class is used to represent polygonal geometry in the SceneGraph.
@@ -58,6 +59,7 @@ class GUA_DLL ScatterPlotNode : public GeometryNode {
 
 };
 
-}
+} // namespace node
+} // namespace gua
 
 #endif  // GUA_SCATTER_PLOT_NODE_HPP

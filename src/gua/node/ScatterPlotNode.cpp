@@ -20,16 +20,17 @@
  ******************************************************************************/
 
 // class header
-#include <gua/scenegraph/ScatterPlotNode.hpp>
+#include <gua/node/ScatterPlotNode.hpp>
 
 #include <gua/databases/GeometryDatabase.hpp>
 #include <gua/databases/MaterialDatabase.hpp>
-#include <gua/scenegraph/RayNode.hpp>
+#include <gua/node/RayNode.hpp>
 #include <gua/renderer/ScatterPlotLoader.hpp>
 
 // guacamole headers
 
 namespace gua {
+namespace node {
 
   ////////////////////////////////////////////////////////////////////////////////
   ScatterPlotNode::ScatterPlotNode(std::string const& name,
@@ -245,4 +246,6 @@ namespace gua {
   std::shared_ptr<Node> ScatterPlotNode::copy() const {
     return std::make_shared<ScatterPlotNode>(get_name(), filename_, material_, get_transform());
   }
+
+}
 }
