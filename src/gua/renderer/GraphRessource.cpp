@@ -38,13 +38,13 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
 
   (ctx.render_context->map_buffer(vertices_[ctx.id],access_mode)));
 
-  data[0].pos = scm::math::vec3(-1.5,-1.5,-1.0);
-  data[0].pos = scm::math::vec3( 1.5,-1.5,-1.0);
-  data[2].pos = scm::math::vec3( 1.0, 1.5,-1.0);
+  data[0].pos = scm::math::vec3(-0.5f,-0.5f,0.0f);
+  data[0].pos = scm::math::vec3( 0.5f,-0.5f,0.0f);
+  data[2].pos = scm::math::vec3( 0.0f, 1.0f,0.0f);
 
-  data[0].normal = scm::math::vec3(0.0,0.0,1.0);
-  data[1].normal = scm::math::vec3(0.0,0.0,1.0);
-  data[2].normal = scm::math::vec3(0.0,0.0,1.0);
+  data[0].normal = scm::math::vec3(0.0f,0.0f,1.0f);
+  data[1].normal = scm::math::vec3(0.0f,0.0f,1.0f);
+  data[2].normal = scm::math::vec3(0.0f,0.0f,1.0f);
 
   ctx.render_context->unmap_buffer(vertices_[ctx.id]);
 
@@ -65,10 +65,13 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
   std::vector<scm::gl::buffer_ptr> buffer_arrays;
   buffer_arrays.push_back(vertices_[ctx.id]);
 
-  vertex_array_[ctx.id] = ctx.render_device->create_vertex_array(
-      scm::gl::vertex_format(0, 0, scm::gl::TYPE_VEC3F, sizeof(Vertex))(
-          0, 1, scm::gl::TYPE_VEC3F, sizeof(Vertex)),
-      buffer_arrays);
+  vertex_array_[ctx.id] = 
+
+  ctx.render_device->create_vertex_array(
+  
+  scm::gl::vertex_format(0,0,scm::gl::TYPE_VEC3F,sizeof(Vertex))
+                        (0,1,scm::gl::TYPE_VEC3F,sizeof(Vertex)),
+                        buffer_arrays);
 }
 
 void GraphRessource::draw(RenderContext const& ctx) const
