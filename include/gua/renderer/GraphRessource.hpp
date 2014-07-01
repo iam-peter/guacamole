@@ -1,80 +1,35 @@
-/******************************************************************************
- * guacamole - delicious VR                                                   *
- *                                                                            *
- * Copyright: (c) 2011-2013 Bauhaus-Universität Weimar                        *
- * Contact:   felix.lauer@uni-weimar.de / simon.schneegans@uni-weimar.de      *
- *                                                                            *
- * This program is free software: you can redistribute it and/or modify it    *
- * under the terms of the GNU General Public License as published by the Free *
- * Software Foundation, either version 3 of the License, or (at your option)  *
- * any later version.                                                         *
- *                                                                            *
- * This program is distributed in the hope that it will be useful, but        *
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY *
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License   *
- * for more details.                                                          *
- *                                                                            *
- * You should have received a copy of the GNU General Public License along    *
- * with this program. If not, see <http://www.gnu.org/licenses/>.             *
- *                                                                            *
- ******************************************************************************/
 
 #ifndef GUA_GRAPH_RESSOURCE_HPP
 #define GUA_GRAPH_RESSOURCE_HPP
 
-// guacamole headers
-#include <gua/platform.hpp>
 #include <gua/renderer/GeometryRessource.hpp>
 #include <gua/renderer/GraphUberShader.hpp>
 
-// external headers
 #include <scm/gl_core.h>
 
 #include <mutex>
 #include <thread>
-
 #include <vector>
-
-namespace 
-{
-
-struct Vertex
-{
-  scm::math::vec3f pos;
-  scm::math::vec3f normal;
-};
-
-}
 
 namespace gua
 {
 
-struct RenderContext;
-
 class GraphRessource : public GeometryRessource
 {
-	public:
+  public:
 
-	GraphRessource();
+  GraphRessource();
 
   void draw(RenderContext const& context) const;
 
   void ray_test(Ray const& ray,
-								PickResult::Options options,
-                Node* owner, 
-								std::set<PickResult>& hits);
+                PickResult::Options options,
+                Node * owner, 
+                std::set<PickResult> & hits);
 
   std::shared_ptr<GeometryUberShader> create_ubershader() const;
 
-	private:
-
-	std::vector<Vertex> const generate_sphere_vertices(unsigned int rings,
-												 														 unsigned int sectors,
-												 														 float radius = 1.0) const;
-
-	std::vector<unsigned> const 
-
-	generate_sphere_indices(unsigned int rings,unsigned int sectors) const;
+  private:
 
   void upload_to(RenderContext const& context) const;
 
@@ -83,8 +38,6 @@ class GraphRessource : public GeometryRessource
   mutable std::vector<scm::gl::buffer_ptr> indices_;
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
   mutable std::mutex upload_mutex_;
-
-	mutable unsigned short face_number_;
 };
 
 }

@@ -87,6 +87,10 @@ namespace gua {
     auto program = std::make_shared<ShaderProgram>();
     program->create_from_sources(vertex_shader, fragment_shader);
     add_program(program);
+
+    auto program1 = std::make_shared<ShaderProgram>();
+    program1->create_from_sources("#version 420","#version 420");
+    add_program(program1);
   }
 
   ////////////////////////////////////////////////////////////////////////////////
