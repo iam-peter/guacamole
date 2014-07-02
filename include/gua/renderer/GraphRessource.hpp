@@ -11,6 +11,15 @@
 #include <thread>
 #include <vector>
 
+struct Vertex
+{
+  scm::math::vec3 pos;
+  scm::math::vec2 tex;
+  scm::math::vec3 normal;
+  scm::math::vec3 tangent;
+  scm::math::vec3 bitangent;
+};
+
 namespace gua
 {
 
@@ -31,13 +40,18 @@ class GraphRessource : public GeometryRessource
 
   private:
 
-  void upload_to(RenderContext const& context) const;
+  std::vector<Vertex> const 
+  sphere_vertices(unsigned rings,unsigned sectors,float radius) const;
+  std::vector<unsigned> const
+  sphere_indices(unsigned rings,unsigned sectors) const;
 
+  void upload_to(RenderContext const& context) const;
 
   mutable std::vector<scm::gl::buffer_ptr> vertices_;
   mutable std::vector<scm::gl::buffer_ptr> indices_;
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
   mutable std::mutex upload_mutex_;
+  mutable unsigned face_number_;
 };
 
 }
