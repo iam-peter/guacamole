@@ -1,7 +1,12 @@
 
 #include <gua/renderer/GraphRessource.hpp>
 
+#include <ogdf/basic/GraphAttributes.h>
 #include <ogdf/basic/graph_generators.h>
+#include <ogdf/layered/MedianHeuristic.h>
+#include <ogdf/layered/OptimalHierarchyLayout.h>
+#include <ogdf/layered/OptimalRanking.h>
+#include <ogdf/layered/SugiyamaLayout.h>
 
 namespace gua
 {
@@ -14,7 +19,7 @@ GraphRessource::GraphRessource()
 
 std::vector<Vertex> const GraphRessource::
 
-sphere_vertices(unsigned rings,unsigned sectors,float radius) const
+sphere_vertices(unsigned rings,unsigned sectors,float radius,scm::math::vec3 const& pos) const
 {
   std::vector<Vertex> vertices;
 
@@ -29,7 +34,7 @@ sphere_vertices(unsigned rings,unsigned sectors,float radius) const
       float y = std::sin(-M_PI_2 + M_PI * r * R);
       float z = std::sin(2 * M_PI * s * S) * std::sin(M_PI * r * R);
 
-      tmp.pos = scm::math::vec3f(x,y,z) * radius;
+      tmp.pos = scm::math::vec3f(x,y,z) * radius + pos;
       tmp.normal = scm::math::vec3f(x,y,z);
       tmp.tex = scm::math::vec2(0.f, 0.f);
       tmp.tangent = scm::math::vec3(0.f, 0.f, 0.f);
@@ -43,20 +48,20 @@ sphere_vertices(unsigned rings,unsigned sectors,float radius) const
 
 std::vector<unsigned> const GraphRessource::
 
-sphere_indices(unsigned rings,unsigned sectors) const
+sphere_indices(unsigned rings,unsigned sectors,unsigned offset) const
 {
   std::vector<unsigned> indices;
 
   for (unsigned r(0); r < rings - 1; ++r)
     for (unsigned s(0); s < sectors - 1; ++s)
     {
-      indices.push_back(r * sectors + s);
-      indices.push_back(r * sectors + s + 1);
-      indices.push_back((r + 1) * sectors + s);
+      indices.push_back(r * sectors + s + offset);
+      indices.push_back(r * sectors + s + 1 + offset);
+      indices.push_back((r + 1) * sectors + s + offset);
       
-      indices.push_back(r * sectors + s + 1);
-      indices.push_back((r + 1) * sectors + s + 1);
-      indices.push_back((r + 1) * sectors + s);
+      indices.push_back(r * sectors + s + 1 + offset);
+      indices.push_back((r + 1) * sectors + s + 1 + offset);
+      indices.push_back((r + 1) * sectors + s + offset);
     }
 
   return indices;
@@ -64,6 +69,23 @@ sphere_indices(unsigned rings,unsigned sectors) const
 
 void GraphRessource::upload_to(RenderContext const& ctx) const
 {
+  ogdf::Graph graph;
+
+  ogdf::randomSimpleGraph(graph,20,20);
+
+  ogdf::GraphAttributes g_attr(graph);
+
+  ogdf::SugiyamaLayout sl;
+
+  sl.setRanking(new ogdf::OptimalRanking);
+  sl.setCrossMin(new ogdf::MedianHeuristic);
+
+  ogdf::OptimalHierarchyLayout * ohl = new ogdf::OptimalHierarchyLayout;
+
+  sl.setLayout(ohl);
+  sl.call(g_attr);
+
+
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
   if(vertices_.size() <= ctx.id)
@@ -78,6 +100,16 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
 
   std::vector<Vertex>   vertices(sphere_vertices(rings,sectors,radius));
   std::vector<unsigned> indices(sphere_indices(rings,sectors));
+
+  for(ogdf::node n = graph.firstNode() ; n ; n = n->succ())
+  {
+    //scm::math:vec3 pos(g_attr.x(n),g_attr.y(n),0.0f);
+    //std::vector<Vertex> temp(sphere_vertices(rings,sectors,radius,pos));
+
+    //vertices.insert(vertices.begin(),tem);
+
+    std::cout << std::endl << "x : " << g_attr.x(n) << " y " << g_attr.y(n);
+  }
 
   face_number_ = indices.size() / 3;
 

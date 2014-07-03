@@ -40,10 +40,14 @@ class GraphRessource : public GeometryRessource
 
   private:
 
-  std::vector<Vertex> const 
-  sphere_vertices(unsigned rings,unsigned sectors,float radius) const;
-  std::vector<unsigned> const
-  sphere_indices(unsigned rings,unsigned sectors) const;
+  std::vector<Vertex> const sphere_vertices(unsigned rings,
+                                            unsigned sectors,
+                                            float radius,
+                                            scm::math::vec3 const& pos = scm::math::vec3(0.0)) const;
+
+  std::vector<unsigned> const sphere_indices(unsigned rings,
+                                             unsigned sectors,
+                                             unsigned offset = 0) const;
 
   void upload_to(RenderContext const& context) const;
 
