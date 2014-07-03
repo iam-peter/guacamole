@@ -103,11 +103,13 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
 
   for(ogdf::node n = graph.firstNode() ; n ; n = n->succ())
   {
-    //scm::math:vec3 pos(g_attr.x(n),g_attr.y(n),0.0f);
-    //std::vector<Vertex> temp(sphere_vertices(rings,sectors,radius,pos));
+    scm::math::vec3 pos(g_attr.x(n),g_attr.y(n),0.0f);
 
-    //vertices.insert(vertices.begin(),tem);
+    std::vector<Vertex> v_tmp(sphere_vertices(rings,sectors,radius,pos));
+    std::vector<unsigned> i_tmp(sphere_indices(rings,sectors,indices.size()));
 
+    vertices.insert(vertices.end(),v_tmp.begin(),v_tmp.end());
+    indices.insert(indices.end(),i_tmp.begin(),i_tmp.end());
     std::cout << std::endl << "x : " << g_attr.x(n) << " y " << g_attr.y(n);
   }
 
