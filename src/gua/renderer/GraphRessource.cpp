@@ -20,7 +20,7 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
 {
   ogdf::Graph graph;
 
-  ogdf::randomSimpleGraph(graph,19,19);
+  ogdf::randomSimpleGraph(graph,40,40);
 
   ogdf::GraphAttributes g_attr(graph);
 
@@ -187,11 +187,39 @@ edge_vertices(scm::math::vec3f const& source,
   unsigned const sectors = 20;
   float    const radius  = 1.0f;
 
-  std::vector<Vertex> v;
+  std::vector<Vertex> vertices;
 
-  
+  scm::math::vec3f normal(target-source);
 
-  return v;
+  scm::math::vec3f u(normal.y,-normal.x,0.0);
+  scm::math::vec3f v(scm::math::cross(normal,u));
+
+  u = scm::math::normalize(u) * radius;
+  v = scm::math::normalize(v) * radius;
+
+  Vertex vertex;
+
+  vertex.tex       = scm::math::vec2f(0.f, 0.f);
+  vertex.tangent   = scm::math::vec3f(0.f, 0.f, 0.f);
+  vertex.bitangent = scm::math::vec3f(0.f, 0.f, 0.f); 
+
+  for(double rad = 0.0 ; rad < 2.0 * M_PI ; rad += M_PI / (sectors - 1))
+  {
+    scm::math::vec3f pos(source);
+
+    pos += u * std::cos(rad) + v * std::sin(rad);
+
+    vertex.pos    = pos;
+    vertex.normal = scm::math::normalize(pos - source);
+
+    vertices.push_back(vertex);
+
+    vertex.pos += normal;
+
+    vertices.push_back(vertex);
+  }
+
+  return vertices;
 }
 
 std::vector<unsigned> const GraphRessource::
@@ -211,6 +239,41 @@ node_indices(unsigned rings,unsigned sectors,unsigned offset) const
       indices.push_back((r + 1) * sectors + s + 1 + offset);
       indices.push_back((r + 1) * sectors + s + offset);
     }
+
+  return indices;
+}
+
+std::vector<unsigned> const GraphRessource::
+
+edge_indices(unsigned offset) const
+{
+  std::vector<unsigned> indices;
+
+  unsigned const sectors = 20;
+
+  for(unsigned short index = offset ; index < offset + sectors * 2 ; ++index)
+  {
+    if(index > offset + sectors * 2 - 2)
+    {
+      indices.push_back(index);
+      indices.push_back(index+1);
+      indices.push_back(index+2);
+    }
+
+    else if(index > offset + sectors * 2 - 1)
+    {
+      indices.push_back(index);
+      indices.push_back(index+1);
+      indices.push_back(offset);
+    }
+
+    else
+    {
+      indices.push_back(index+1);
+      indices.push_back(offset);
+      indices.push_back(offset+1);
+    }
+  }
 
   return indices;
 }

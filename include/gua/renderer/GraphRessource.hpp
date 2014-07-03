@@ -51,6 +51,9 @@ class GraphRessource : public GeometryRessource
   std::vector<unsigned> const 
   node_indices(unsigned rings,unsigned sectors,unsigned offset = 0) const;
 
+  std::vector<unsigned> const 
+  edge_indices(unsigned offset) const;
+
   void upload_to(RenderContext const& context) const;
 
   mutable std::vector<scm::gl::buffer_ptr> vertices_;
