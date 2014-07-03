@@ -40,14 +40,16 @@ class GraphRessource : public GeometryRessource
 
   private:
 
-  std::vector<Vertex> const sphere_vertices(unsigned rings,
-                                            unsigned sectors,
-                                            float radius,
-                                            scm::math::vec3 const& pos = scm::math::vec3(0.0)) const;
+  std::vector<Vertex> const 
+  node_vertices(unsigned rings,unsigned sectors,float radius = 1.0,
+                  scm::math::vec3 const& pos = scm::math::vec3(0.0)) const;
 
-  std::vector<unsigned> const sphere_indices(unsigned rings,
-                                             unsigned sectors,
-                                             unsigned offset = 0) const;
+  std::vector<Vertex> const
+  edge_vertices(scm::math::vec3 const& source,
+                scm::math::vec3 const& target) const;
+
+  std::vector<unsigned> const 
+  node_indices(unsigned rings,unsigned sectors,unsigned offset = 0) const;
 
   void upload_to(RenderContext const& context) const;
 
@@ -56,7 +58,7 @@ class GraphRessource : public GeometryRessource
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
   mutable std::mutex upload_mutex_;
 
-  mutable unsigned face_number_;
+  mutable unsigned node_faces_;
 };
 
 }

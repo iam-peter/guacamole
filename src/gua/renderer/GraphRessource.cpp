@@ -16,64 +16,19 @@ GraphRessource::GraphRessource()
 
 }
 
-
-std::vector<Vertex> const GraphRessource::
-
-sphere_vertices(unsigned rings,unsigned sectors,float radius,scm::math::vec3 const& pos) const
-{
-  std::vector<Vertex> vertices;
-
-  float const R = 1.0f / (rings - 1);
-  float const S = 1.0f / (sectors - 1);
-
-  for (unsigned r(0); r < rings; ++r)
-    for (unsigned s(0); s < sectors; ++s)
-    {
-      Vertex tmp;
-      float x = std::cos(2 * M_PI * s * S) * std::sin(M_PI * r * R);
-      float y = std::sin(-M_PI_2 + M_PI * r * R);
-      float z = std::sin(2 * M_PI * s * S) * std::sin(M_PI * r * R);
-
-      tmp.pos = scm::math::vec3f(x,y,z) * radius + pos;
-      tmp.normal = scm::math::vec3f(x,y,z);
-      tmp.tex = scm::math::vec2(0.f, 0.f);
-      tmp.tangent = scm::math::vec3(0.f, 0.f, 0.f);
-      tmp.bitangent = scm::math::vec3(0.f, 0.f, 0.f);
-      
-      vertices.push_back(tmp);
-    }
-
-  return vertices;
-}
-
-std::vector<unsigned> const GraphRessource::
-
-sphere_indices(unsigned rings,unsigned sectors,unsigned offset) const
-{
-  std::vector<unsigned> indices;
-
-  for (unsigned r(0); r < rings - 1; ++r)
-    for (unsigned s(0); s < sectors - 1; ++s)
-    {
-      indices.push_back(r * sectors + s + offset);
-      indices.push_back(r * sectors + s + 1 + offset);
-      indices.push_back((r + 1) * sectors + s + offset);
-      
-      indices.push_back(r * sectors + s + 1 + offset);
-      indices.push_back((r + 1) * sectors + s + 1 + offset);
-      indices.push_back((r + 1) * sectors + s + offset);
-    }
-
-  return indices;
-}
-
 void GraphRessource::upload_to(RenderContext const& ctx) const
 {
   ogdf::Graph graph;
 
-  ogdf::randomSimpleGraph(graph,20,20);
+  ogdf::randomSimpleGraph(graph,19,19);
 
   ogdf::GraphAttributes g_attr(graph);
+
+  for(ogdf::node n = graph.firstNode() ; n ; n = n->succ())
+  {
+    g_attr.width(n)  = 1.0;
+    g_attr.height(n) = 1.0;
+  }
 
   ogdf::SugiyamaLayout sl;
 
@@ -85,6 +40,8 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
   sl.setLayout(ohl);
   sl.call(g_attr);
 
+  float width  = g_attr.boundingBox().width() / 2.0 ,
+        height = g_attr.boundingBox().height() / 2.0;
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
@@ -95,25 +52,24 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
     vertex_array_.resize(ctx.id + 1);
   }
 
-  float    const radius = 1.0f;
+  float    const radius = 10.0f;
   unsigned const rings  = 20 , sectors = 20;
 
-  std::vector<Vertex>   vertices(sphere_vertices(rings,sectors,radius));
-  std::vector<unsigned> indices(sphere_indices(rings,sectors));
+  std::vector<Vertex>   vertices;
+  std::vector<unsigned> indices;
 
   for(ogdf::node n = graph.firstNode() ; n ; n = n->succ())
   {
-    scm::math::vec3 pos(g_attr.x(n),g_attr.y(n),0.0f);
+    scm::math::vec3f center(g_attr.x(n)-width,g_attr.y(n)-height,0.0f);
 
-    std::vector<Vertex> v_tmp(sphere_vertices(rings,sectors,radius,pos));
-    std::vector<unsigned> i_tmp(sphere_indices(rings,sectors,indices.size()));
+    std::vector<Vertex>   v_tmp(node_vertices(rings,sectors,radius,center));
+    std::vector<unsigned> i_tmp(node_indices(rings,sectors,vertices.size()));
 
     vertices.insert(vertices.end(),v_tmp.begin(),v_tmp.end());
     indices.insert(indices.end(),i_tmp.begin(),i_tmp.end());
-    std::cout << std::endl << "x : " << g_attr.x(n) << " y " << g_attr.y(n);
   }
 
-  face_number_ = indices.size() / 3;
+  node_faces_ = indices.size() / 3;
 
   vertices_[ctx.id] = 
 
@@ -157,7 +113,9 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
                         buffer_arrays);
 }
 
-void GraphRessource::draw(RenderContext const& ctx) const
+void GraphRessource::
+
+draw(RenderContext const& ctx) const
 {
   if(vertices_.size() <= ctx.id || vertices_[ctx.id] == nullptr)
   {
@@ -173,20 +131,88 @@ void GraphRessource::draw(RenderContext const& ctx) const
                                         scm::gl::TYPE_UINT);
 
   ctx.render_context->apply();
-  ctx.render_context->draw_elements(face_number_ * 3);
+  ctx.render_context->draw_elements(node_faces_ * 3);
 }
 
-void GraphRessource::ray_test(Ray const& ray,
-                              PickResult::Options options,
-                              Node * owner,
-                              std::set<PickResult> & hits)
+void GraphRessource::
+
+ray_test(Ray const& ray,PickResult::Options options,
+         Node * owner  ,std::set<PickResult> & hits)
 {
 
 }
 
-std::shared_ptr<GeometryUberShader> GraphRessource::create_ubershader() const
+std::shared_ptr<GeometryUberShader> GraphRessource::
+
+create_ubershader() const
 {
   return std::make_shared<GraphUberShader>();
+}
+
+std::vector<Vertex> const GraphRessource::
+
+node_vertices(unsigned rings,unsigned sectors,
+                float radius,scm::math::vec3f const& center) const
+{
+  std::vector<Vertex> vertices;
+
+  float const R = 1.0f / (rings - 1);
+  float const S = 1.0f / (sectors - 1);
+
+  for (unsigned r(0); r < rings; ++r)
+    for (unsigned s(0); s < sectors; ++s)
+    {
+      Vertex tmp;
+      float x = std::cos(2 * M_PI * s * S) * std::sin(M_PI * r * R);
+      float y = std::sin(-M_PI_2 + M_PI * r * R);
+      float z = std::sin(2 * M_PI * s * S) * std::sin(M_PI * r * R);
+
+      tmp.pos       = center + scm::math::vec3f(x,y,z) * radius;
+      tmp.normal    = scm::math::vec3f(x,y,z);
+      tmp.tex       = scm::math::vec2f(0.f, 0.f);
+      tmp.tangent   = scm::math::vec3f(0.f, 0.f, 0.f);
+      tmp.bitangent = scm::math::vec3f(0.f, 0.f, 0.f);
+      
+      vertices.push_back(tmp);
+    }
+
+  return vertices;
+}
+
+std::vector<Vertex> const GraphRessource::
+
+edge_vertices(scm::math::vec3f const& source,
+              scm::math::vec3f const& target) const
+{
+  unsigned const sectors = 20;
+  float    const radius  = 1.0f;
+
+  std::vector<Vertex> v;
+
+  
+
+  return v;
+}
+
+std::vector<unsigned> const GraphRessource::
+
+node_indices(unsigned rings,unsigned sectors,unsigned offset) const
+{
+  std::vector<unsigned> indices;
+
+  for (unsigned r(0); r < rings - 1; ++r)
+    for (unsigned s(0); s < sectors - 1; ++s)
+    {
+      indices.push_back(r * sectors + s + offset);
+      indices.push_back(r * sectors + s + 1 + offset);
+      indices.push_back((r + 1) * sectors + s + offset);
+      
+      indices.push_back(r * sectors + s + 1 + offset);
+      indices.push_back((r + 1) * sectors + s + 1 + offset);
+      indices.push_back((r + 1) * sectors + s + offset);
+    }
+
+  return indices;
 }
 
 }
