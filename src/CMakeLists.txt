@@ -137,6 +137,7 @@ ENDIF(MSVC)
 # link static libraries
 TARGET_LINK_LIBRARIES( guacamole general ${SCHISM_LIBRARIES})
 TARGET_LINK_LIBRARIES( guacamole general ${ASSIMP_LIBRARIES})
+
 IF (GUACAMOLE_PBR_SUPPORT)
   TARGET_LINK_LIBRARIES( guacamole general ${PBR_LIBRARIES})
 ENDIF (GUACAMOLE_PBR_SUPPORT)
@@ -161,6 +162,9 @@ TARGET_LINK_LIBRARIES( guacamole optimized ${BULLET_DYNAMICS_LIBRARY})
 TARGET_LINK_LIBRARIES( guacamole optimized ${BULLET_COLLISION_LIBRARY})
 TARGET_LINK_LIBRARIES( guacamole optimized ${BULLET_MATH_LIBRARY})
 TARGET_LINK_LIBRARIES( guacamole optimized ${BULLET_HACD_LIBRARY})
+TARGET_LINK_LIBRARIES( guacamole optimized OGDF)
+TARGET_LINK_LIBRARIES( guacamole optimized COIN)
+TARGET_LINK_LIBRARIES( guacamole optimized pthread)
 
 # link debug libraries
 TARGET_LINK_LIBRARIES( guacamole debug ${JSON_LIBRARY_DEBUG})

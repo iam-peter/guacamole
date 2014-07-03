@@ -1,6 +1,8 @@
 
 #include <gua/renderer/GraphRessource.hpp>
 
+#include <ogdf/basic/graph_generators.h>
+
 namespace gua
 {
 

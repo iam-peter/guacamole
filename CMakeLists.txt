@@ -58,6 +58,7 @@ include(find_compiler)
 include(FindSchism)
 include(FindBoost)
 include(FindZMQ)
+include(FindOGDF)
 
 if (UNIX)
 	set (BULLET_ROOT "/opt/bullet/default" CACHE PATH "Set to your bullet install path.")
@@ -83,6 +84,7 @@ set(LIB_PATHS
     ${BULLET_LIBRARY_DIRS}
     ${SCHISM_LIBRARY_DIRS}
     ${ZMQ_LIBRARY_DIRS}
+    ${OGDF_LIBRARY_DIR}
 )
 
 set(INCLUDE_PATHS
@@ -96,7 +98,10 @@ set(INCLUDE_PATHS
     ${GLEW_INCLUDE_DIRS}
     ${BULLET_INCLUDE_DIRS}
     ${ZMQ_INCLUDE_DIRS}
+    ${OGDF_INCLUDE_DIR}
 )
+
+LIST(APPEND LIB_PATHS ${PBR_LIBRARY_DIRS})
 
 IF (GUACAMOLE_PBR_SUPPORT)
   LIST(APPEND LIB_PATHS ${PBR_LIBRARY_DIRS})
@@ -259,4 +264,9 @@ IF (GUACAMOLE_PBR_SUPPORT)
   message(STATUS "   library path: ${PBR_LIBRARY_DIRS}" )
   message(STATUS "   include: ${PBR_INCLUDE_DIRS}" )
 ENDIF (GUACAMOLE_PBR_SUPPORT)
+message(STATUS "" )
+message(STATUS " OGDF:" )
+message(STATUS "   library: OGDF,COIN" )
+message(STATUS "   library path: ${OGDF_LIBRARY_DIR}" )
+message(STATUS "   include: ${OGDF_INCLUDE_DIR}" )
 message(STATUS "" )
