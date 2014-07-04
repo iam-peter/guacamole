@@ -43,31 +43,31 @@ namespace gua {
 ////////////////////////////////////////////////////////////////////////////////
 
 ScatterPlotRessource::ScatterPlotRessource(
-      std::shared_ptr<utils::DataColumn> xdata
-    , std::shared_ptr<utils::DataColumn> ydata
-    , std::shared_ptr<utils::DataColumn> zdata
+      std::vector<float> const& xdata
+    , std::vector<float> const& ydata
+    , std::vector<float> const& zdata
   )
   : point_vertices_()
   , point_indices_()
   , point_vertex_array_()
   , upload_mutex_()
-  , cube_size_(0.01f, 0.01f, 0.0001f)
+  , cube_size_(0.01f, 0.01f, 0.01f)
   , num_indices_(0)
   , num_points_(0)
   , xdata_(xdata)
   , ydata_(ydata)
   , zdata_(zdata) {
 
-  num_points_ = std::min(xdata_->get_num_values(), ydata_->get_num_values());
+  num_points_ = std::min(xdata_.size(), ydata_.size());
   num_indices_ = num_points_ * 6 * 2 * 3 ; // cube has 6 faces of 2 triangles
 
   bounding_box_.expandBy(scm::math::vec3(-0.5f, -0.5f, 0.0f));
   bounding_box_.expandBy(scm::math::vec3(0.5f, 0.5f, 0.0f));
 
-  if (zdata_ != nullptr)  // 3d-scatterplot
+  if (!zdata_.empty())  // 3d-scatterplot
   {
+    num_points_ = std::min(xdata_.size(), std::min(ydata_.size(), zdata_.size()));
     cube_size_[2] = cube_size_[0];
-    num_points_ = std::min(zdata_->get_num_values(), num_points_);
     bounding_box_.expandBy(scm::math::vec3(0.0f, 0.0f, 0.5f));
     bounding_box_.expandBy(scm::math::vec3(0.0f, 0.0f, -0.5f));
   }
@@ -87,7 +87,7 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
     point_vertex_array_.resize(ctx.id + 1);
   }
 
-  bool third_dim = (zdata_ != nullptr);
+  bool third_dim = !zdata_.empty();
 
   unsigned int vertices_per_point = 6 * 4;   // 6 cube faces with each 4 vertices
 
@@ -103,11 +103,11 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
 
   for (unsigned p(0); p < num_points_; ++p)
   {
-    float x = -0.5f + xdata_->get_norm_values()[p];
-    float y = -0.5f + ydata_->get_norm_values()[p];
+    float x = -0.5f + xdata_[p];
+    float y = -0.5f + ydata_[p];
     float z = 0.0f;
     if (third_dim)
-      z = 0.5f - zdata_->get_norm_values()[p];
+      z = 0.5f - zdata_[p];
 
     // front face
     point_data[p * vertices_per_point + 0].pos = scm::math::vec3(x - cube_size_[0], y - cube_size_[1], z + cube_size_[2]);
@@ -129,7 +129,7 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
     point_data[p * vertices_per_point + 6].normal = scm::math::vec3(0, 0, -1);
     point_data[p * vertices_per_point + 7].pos = scm::math::vec3(x + cube_size_[0], y + cube_size_[1], z - cube_size_[2]);
     point_data[p * vertices_per_point + 7].normal = scm::math::vec3(0, 0, -1);
-    
+
 
     // right face
     point_data[p * vertices_per_point + 8].pos = scm::math::vec3(x + cube_size_[0], y - cube_size_[1], z + cube_size_[2]);
@@ -140,7 +140,7 @@ void ScatterPlotRessource::upload_to(RenderContext const& ctx) const
     point_data[p * vertices_per_point + 10].normal = scm::math::vec3(1, 0, 0);
     point_data[p * vertices_per_point + 11].pos = scm::math::vec3(x + cube_size_[0], y + cube_size_[1], z + cube_size_[2]);
     point_data[p * vertices_per_point + 11].normal = scm::math::vec3(1, 0, 0);
-    
+
 
     // left face
     point_data[p * vertices_per_point + 12].pos = scm::math::vec3(x - cube_size_[0], y - cube_size_[1], z - cube_size_[2]);
@@ -224,7 +224,7 @@ void ScatterPlotRessource::draw(RenderContext const& ctx) const {
   scm::gl::context_vertex_input_guard vig(ctx.render_context);
   {
     scm::gl::context_state_objects_guard contex_guard(ctx.render_context);
-    
+
     // set line and point size
     ctx.render_context->set_rasterizer_state(rasterizer_state_, 1.0f, 10.0f);
 

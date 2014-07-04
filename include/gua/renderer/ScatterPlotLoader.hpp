@@ -26,7 +26,7 @@
 #include <gua/renderer/ScatterPlotRessource.hpp>
 #include <gua/renderer/GeometryLoader.hpp>
 #include <gua/scenegraph/SceneGraph.hpp>
-#include <gua/utils/DataSet.hpp> 
+#include <gua/utils/DataSet.hpp>
 
 
 // external headers
@@ -64,31 +64,17 @@ public:
    /**
    *
    */
-   std::shared_ptr<node::Node> create_from_csvfile(
+   std::shared_ptr<node::Node> create(
       std::string const& node_name
     , std::string const& material
-    , std::string const& csv_file_name
-    , std::string const& xattrib_name
-    , std::string const& yattrib_name
-    , std::string const& zattrib_name = ""
-    , std::string const& separator = ","
-    , std::string const& escape = "\\"
-    , std::string const& quote = "\""
+    , std::vector<float> const& xdata
+    , std::vector<float> const& ydata
+    , std::vector<float> const& zdata = std::vector<float>()
   );
   /**
   *
   */
   bool is_supported(std::string const& file_name) const;
-
-private: // methods
-
-  static std::map<std::string, std::shared_ptr<utils::DataSet>>  loaded_csvs_;
-
-  /*std::shared_ptr<Node> get_tree(std::shared_ptr<Assimp::Importer> const& importer,
-                                 aiScene const* ai_scene,
-                                 aiNode* ai_root,
-                                 std::string const& file_name,
-                                 unsigned flags, unsigned& mesh_count);*/
 
 };
 

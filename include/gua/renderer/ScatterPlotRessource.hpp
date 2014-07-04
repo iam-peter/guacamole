@@ -58,9 +58,9 @@ class ScatterPlotRessource : public GeometryRessource {
    * Creates a new and empty ScatterPlot.
    */
   ScatterPlotRessource(
-      std::shared_ptr<utils::DataColumn> xdata
-    , std::shared_ptr<utils::DataColumn> ydata
-    , std::shared_ptr<utils::DataColumn> zdata
+      std::vector<float> const& xdata
+    , std::vector<float> const& ydata
+    , std::vector<float> const& zdata = std::vector<float>()
   );
 
   /**
@@ -86,9 +86,9 @@ class ScatterPlotRessource : public GeometryRessource {
   unsigned int  num_indices_;
   unsigned int  num_points_;
 
-  std::shared_ptr<utils::DataColumn>  xdata_;
-  std::shared_ptr<utils::DataColumn>  ydata_;
-  std::shared_ptr<utils::DataColumn>  zdata_;
+  std::vector<float> xdata_;
+  std::vector<float> ydata_;
+  std::vector<float> zdata_;
 
   mutable std::vector<scm::gl::buffer_ptr>        point_vertices_;
   mutable std::vector<scm::gl::buffer_ptr>        point_indices_;
