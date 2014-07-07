@@ -26,8 +26,8 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
 
   for(ogdf::node n = graph.firstNode() ; n ; n = n->succ())
   {
-    g_attr.width(n)  = 1.0;
-    g_attr.height(n) = 1.0;
+    g_attr.width(n)  = 10.0;
+    g_attr.height(n) = 10.0;
   }
 
   ogdf::SugiyamaLayout sl;
@@ -58,6 +58,26 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
   std::vector<Vertex>   vertices;
   std::vector<unsigned> indices;
 
+  for(ogdf::edge e = graph.firstEdge() ; e ; e = e->succ())
+  {
+    ogdf::node source = e->source(),
+               target = e->target();
+
+    scm::math::vec3 pos_source(g_attr.x(source)-width,g_attr.y(source)-height,0.0),
+                   pos_target(g_attr.x(target)-width,g_attr.y(target)-height,0.0);
+
+    
+    //scm::math::vec3 pos_source(0.0,-50.0,0.0);
+    //scm::math::vec3 pos_target(0.0,50.0,0.0);
+
+    std::vector<Vertex> v_tmp(edge_vertices(pos_source,pos_target));
+    std::vector<unsigned> i_tmp(edge_indices(vertices.size()));
+
+    vertices.insert(vertices.end(),v_tmp.begin(),v_tmp.end());
+    indices.insert(indices.end(),i_tmp.begin(),i_tmp.end());
+   // break;
+  }
+
   for(ogdf::node n = graph.firstNode() ; n ; n = n->succ())
   {
     scm::math::vec3f center(g_attr.x(n)-width,g_attr.y(n)-height,0.0f);
@@ -70,6 +90,8 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
   }
 
   node_faces_ = indices.size() / 3;
+
+  std::cout << indices.size();
 
   vertices_[ctx.id] = 
 
@@ -130,6 +152,7 @@ draw(RenderContext const& ctx) const
                                         scm::gl::PRIMITIVE_TRIANGLE_LIST,
                                         scm::gl::TYPE_UINT);
 
+//  std::cout << "faces : " << node_faces_ << std::endl;
   ctx.render_context->apply();
   ctx.render_context->draw_elements(node_faces_ * 3);
 }
@@ -138,9 +161,7 @@ void GraphRessource::
 
 ray_test(Ray const& ray,PickResult::Options options,
          Node * owner  ,std::set<PickResult> & hits)
-{
-
-}
+{}
 
 std::shared_ptr<GeometryUberShader> GraphRessource::
 
@@ -185,39 +206,55 @@ edge_vertices(scm::math::vec3f const& source,
               scm::math::vec3f const& target) const
 {
   unsigned const sectors = 20;
-  float    const radius  = 1.0f;
+  float    const radius  = 2.5 , rad_increment = 2 * M_PI / sectors;
 
   std::vector<Vertex> vertices;
 
   scm::math::vec3f normal(target-source);
 
+  //std::cout << "normal : " << normal;
+
   scm::math::vec3f u(normal.y,-normal.x,0.0);
+
+  //std::cout << " u : " << u << std::endl;
+
   scm::math::vec3f v(scm::math::cross(normal,u));
+
+  // std::cout << " v : " << v << std::endl;
 
   u = scm::math::normalize(u) * radius;
   v = scm::math::normalize(v) * radius;
 
   Vertex vertex;
 
-  vertex.tex       = scm::math::vec2f(0.f, 0.f);
-  vertex.tangent   = scm::math::vec3f(0.f, 0.f, 0.f);
-  vertex.bitangent = scm::math::vec3f(0.f, 0.f, 0.f); 
+  vertex.tex       = scm::math::vec2f(0.f,0.f);
+  vertex.tangent   = scm::math::vec3f(0.f,0.f,0.f);
+  vertex.bitangent = scm::math::vec3f(0.f,0.f,0.f); 
 
-  for(double rad = 0.0 ; rad < 2.0 * M_PI ; rad += M_PI / (sectors - 1))
+  for(double rad = 0.0 ; rad < 2.0 * M_PI ; rad += rad_increment)
   {
+    //std::cout << rad << std::endl;
+
     scm::math::vec3f pos(source);
 
     pos += u * std::cos(rad) + v * std::sin(rad);
 
     vertex.pos    = pos;
+
+    //std::cout << "vertex position : " << vertex.pos << std::endl;
+
     vertex.normal = scm::math::normalize(pos - source);
 
     vertices.push_back(vertex);
 
     vertex.pos += normal;
 
+    //std::cout << "contrair position : " << vertex.pos << std::endl;
+
     vertices.push_back(vertex);
   }
+
+  std::cout << std::endl;
 
   return vertices;
 }
@@ -251,29 +288,16 @@ edge_indices(unsigned offset) const
 
   unsigned const sectors = 20;
 
-  for(unsigned short index = offset ; index < offset + sectors * 2 ; ++index)
+  //std::cout << offset << std::endl;
+
+  for(unsigned short index = offset ; index < offset + sectors * 2; ++index)
   {
-    if(index > offset + sectors * 2 - 2)
-    {
+     // std::cout << "base index : " << index << std::endl;
       indices.push_back(index);
       indices.push_back(index+1);
       indices.push_back(index+2);
-    }
-
-    else if(index > offset + sectors * 2 - 1)
-    {
-      indices.push_back(index);
-      indices.push_back(index+1);
-      indices.push_back(offset);
-    }
-
-    else
-    {
-      indices.push_back(index+1);
-      indices.push_back(offset);
-      indices.push_back(offset+1);
-    }
   }
+  //std::cout << std::endl;
 
   return indices;
 }
