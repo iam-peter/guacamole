@@ -1,7 +1,6 @@
 
 #include <gua/renderer/GraphRessource.hpp>
 
-#include <ogdf/basic/GraphAttributes.h>
 #include <ogdf/basic/graph_generators.h>
 #include <ogdf/layered/MedianHeuristic.h>
 #include <ogdf/layered/OptimalHierarchyLayout.h>
@@ -18,16 +17,14 @@ GraphRessource::GraphRessource()
 
 void GraphRessource::upload_to(RenderContext const& ctx) const
 {
-  ogdf::Graph graph;
+  ogdf::randomSimpleGraph(graph_,20,20);
 
-  ogdf::randomSimpleGraph(graph,40,40);
+  ogdf::GraphAttributes g_attr(graph_);
 
-  ogdf::GraphAttributes g_attr(graph);
-
-  for(ogdf::node n = graph.firstNode() ; n ; n = n->succ())
+  for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
   {
-    g_attr.width(n)  = 10.0;
-    g_attr.height(n) = 10.0;
+    g_attr.width(n)  = 3.0;
+    g_attr.height(n) = 3.0;
   }
 
   ogdf::SugiyamaLayout sl;
@@ -52,13 +49,12 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
     vertex_array_.resize(ctx.id + 1);
   }
 
-  float    const radius = 10.0f;
-  unsigned const rings  = 20 , sectors = 20;
+  unsigned const rings  = 40 , sectors = 40;
 
   std::vector<Vertex>   vertices;
   std::vector<unsigned> indices;
 
-  for(ogdf::edge e = graph.firstEdge() ; e ; e = e->succ())
+  for(ogdf::edge e = graph_.firstEdge() ; e ; e = e->succ())
   {
     ogdf::node source = e->source(),
                target = e->target();
@@ -78,18 +74,18 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
    // break;
   }
 
-  for(ogdf::node n = graph.firstNode() ; n ; n = n->succ())
+  for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
   {
     scm::math::vec3f center(g_attr.x(n)-width,g_attr.y(n)-height,0.0f);
 
-    std::vector<Vertex>   v_tmp(node_vertices(rings,sectors,radius,center));
+    std::vector<Vertex>   v_tmp(node_vertices(rings,sectors,3.0,center));
     std::vector<unsigned> i_tmp(node_indices(rings,sectors,vertices.size()));
 
     vertices.insert(vertices.end(),v_tmp.begin(),v_tmp.end());
     indices.insert(indices.end(),i_tmp.begin(),i_tmp.end());
   }
 
-  node_faces_ = indices.size() / 3;
+  faces_ = indices.size() / 3;
 
   std::cout << indices.size();
 
@@ -152,9 +148,8 @@ draw(RenderContext const& ctx) const
                                         scm::gl::PRIMITIVE_TRIANGLE_LIST,
                                         scm::gl::TYPE_UINT);
 
-//  std::cout << "faces : " << node_faces_ << std::endl;
   ctx.render_context->apply();
-  ctx.render_context->draw_elements(node_faces_ * 3);
+  ctx.render_context->draw_elements(faces_ * 3);
 }
 
 void GraphRessource::
@@ -205,8 +200,8 @@ std::vector<Vertex> const GraphRessource::
 edge_vertices(scm::math::vec3f const& source,
               scm::math::vec3f const& target) const
 {
-  unsigned const sectors = 20;
-  float    const radius  = 2.5 , rad_increment = 2 * M_PI / sectors;
+  unsigned const sectors = 40;
+  float    const radius  = 0.6 , rad_increment = 2 * M_PI / sectors;
 
   std::vector<Vertex> vertices;
 
@@ -286,11 +281,11 @@ edge_indices(unsigned offset) const
 {
   std::vector<unsigned> indices;
 
-  unsigned const sectors = 20;
+  unsigned const sectors = 40;
 
   //std::cout << offset << std::endl;
 
-  for(unsigned short index = offset ; index < offset + sectors * 2; ++index)
+  for(unsigned short index = offset ; index < offset + sectors * 2 - 2; ++index)
   {
      // std::cout << "base index : " << index << std::endl;
       indices.push_back(index);

@@ -11,6 +11,8 @@
 #include <thread>
 #include <vector>
 
+#include <ogdf/basic/GraphAttributes.h>
+
 struct Vertex
 {
   scm::math::vec3 pos;
@@ -61,7 +63,9 @@ class GraphRessource : public GeometryRessource
   mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
   mutable std::mutex upload_mutex_;
 
-  mutable unsigned node_faces_;
+  mutable unsigned faces_;
+
+  mutable ogdf::Graph graph_;
 };
 
 }
