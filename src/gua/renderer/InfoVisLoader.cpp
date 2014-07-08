@@ -20,18 +20,20 @@
  ******************************************************************************/
 
 // class header
-#include <gua/renderer/ScatterPlotLoader.hpp>
+#include <gua/renderer/InfoVisLoader.hpp>
 
 // guacamole headers
 #include <gua/utils/DataSet.hpp>
 #include <gua/utils/TextFile.hpp>
 #include <gua/utils/Logger.hpp>
 #include <gua/utils/string_utils.hpp>
+#include <gua/node/LineChartNode.hpp>
 #include <gua/node/ScatterPlotNode.hpp>
 #include <gua/node/TransformNode.hpp>
 #include <gua/renderer/Material.hpp>
 #include <gua/renderer/MaterialLoader.hpp>
-#include <gua/renderer/ScatterPlotLoader.hpp>
+#include <gua/renderer/InfoVisLoader.hpp>
+#include <gua/renderer/LineChartRessource.hpp>
 #include <gua/renderer/ScatterPlotRessource.hpp>
 #include <gua/databases/MaterialDatabase.hpp>
 #include <gua/databases/GeometryDatabase.hpp>
@@ -45,28 +47,14 @@ namespace gua {
 
 /////////////////////////////////////////////////////////////////////////////
 
-ScatterPlotLoader::ScatterPlotLoader()
+InfoVisLoader::InfoVisLoader()
   : GeometryLoader()
 {}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/*std::shared_ptr<Node> ScatterPlotLoader::create()
-{
-  Logger::LOG_WARNING << "CREATE" << std::endl;
-
-  // TODO set meaningful name
-  std::string name = "instance_name123";
-  GeometryDatabase::instance()->add(name, std::make_shared<ScatterPlotRessource>());
-
-  auto node = std::make_shared<ScatterPlotNode>(name,"data/objects/teapot.obj","data/materials/Red.gmd");
-  //node->set_material("data/materials/Red.gmd");
-
-  return node;
-}*/
-
-std::shared_ptr<node::Node> ScatterPlotLoader::create(
+std::shared_ptr<node::Node> InfoVisLoader::create_scatterplot(
     std::string const& node_name
   , std::string const& material
   , std::vector<float> const& xdata
@@ -81,7 +69,21 @@ std::shared_ptr<node::Node> ScatterPlotLoader::create(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool ScatterPlotLoader::is_supported(std::string const& file_name) const {
+std::shared_ptr<node::Node> InfoVisLoader::create_linechart(
+    std::string const& node_name
+  , std::string const& material
+  , std::vector<float> const& xdata
+  , std::vector<float> const& ydata
+  )
+{
+  GeometryDatabase::instance()->add(node_name, std::make_shared<LineChartRessource>(xdata, ydata));
+
+  return std::make_shared<node::LineChartNode>(node_name, node_name, material);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+bool InfoVisLoader::is_supported(std::string const& file_name) const {
 
   return true;
 }

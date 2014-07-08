@@ -19,10 +19,11 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef GUA_SCATTER_PLOT_LOADER_HPP
-#define GUA_SCATTER_PLOT_LOADER_HPP
+#ifndef GUA_INFOVIS_LOADER_HPP
+#define GUA_INFOVIS_LOADER_HPP
 
 // guacamole headers
+#include <gua/renderer/LineChartRessource.hpp>
 #include <gua/renderer/ScatterPlotRessource.hpp>
 #include <gua/renderer/GeometryLoader.hpp>
 #include <gua/scenegraph/SceneGraph.hpp>
@@ -49,7 +50,7 @@ class GeometryNode;
  * This class can load mesh data from files and display them in multiple
  * contexts. A MeshLoader object is made of several Mesh objects.
  */
-class GUA_DLL ScatterPlotLoader : public GeometryLoader {
+class GUA_DLL InfoVisLoader : public GeometryLoader {
 
 
 public:
@@ -59,17 +60,24 @@ public:
    *
    * Constructs a new and empty MeshLoader.
    */
-   ScatterPlotLoader();
+   InfoVisLoader();
 
    /**
    *
    */
-   std::shared_ptr<node::Node> create(
+   std::shared_ptr<node::Node> create_scatterplot(
       std::string const& node_name
     , std::string const& material
     , std::vector<float> const& xdata
     , std::vector<float> const& ydata
     , std::vector<float> const& zdata = std::vector<float>()
+  );
+
+   std::shared_ptr<node::Node> create_linechart(
+      std::string const& node_name
+    , std::string const& material
+    , std::vector<float> const& xdata
+    , std::vector<float> const& ydata
   );
   /**
   *
@@ -80,4 +88,4 @@ public:
 
 }
 
-#endif  // GUA_SCATTER_PLOT_LOADER_HPP
+#endif  // GUA_INFOVIS_LOADER_HPP
