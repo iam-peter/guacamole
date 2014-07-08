@@ -34,9 +34,16 @@ namespace gua
 
 	std::shared_ptr<Node>
 
-	GraphLoader::create(std::string const& name,std::string const& mat)
+	GraphLoader::generate(std::string const& name,
+                        std::string const& mat,
+                        unsigned short nodes,
+                        unsigned short edges)
 	{
-		GeometryDatabase::instance()->add(name,std::make_shared<GraphRessource>());
+    auto graph_ressource = std::make_shared<GraphRessource>();
+
+    graph_ressource->generate_graph(nodes,edges);
+
+		GeometryDatabase::instance()->add(name,graph_ressource);
 		MaterialDatabase::instance()->load_material(mat);
 
 		std::shared_ptr<Node> node = std::make_shared<GraphNode>(name,name,mat);

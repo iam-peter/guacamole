@@ -44,7 +44,10 @@ class GUA_DLL GraphLoader : public GeometryLoader
 
 	GraphLoader();
 
-	std::shared_ptr<Node> create(std::string const& name,std::string const& mat);
+	std::shared_ptr<Node> generate(std::string const& name,
+                                 std::string const& mat,
+                                 unsigned short nodes = 15,
+                                 unsigned short edges = 20);
 
 	bool is_supported(std::string const& file_name) const;
 };

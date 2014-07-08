@@ -11,22 +11,26 @@ namespace gua
 {
 
 GraphRessource::GraphRessource()
-{
+{}
 
+void GraphRessource::
+
+generate_graph(unsigned short nodes,unsigned short edges) const
+{
+  ogdf::randomSimpleGraph(graph_,nodes,edges);
+
+  //g_attr_.init(graph_,g_attr_.attributes());
+  g_attr_ = ogdf::GraphAttributes(graph_);
+
+  for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
+  {
+    g_attr_.width(n)  = 3.0;
+    g_attr_.height(n) = 3.0;
+  }
 }
 
 void GraphRessource::upload_to(RenderContext const& ctx) const
 {
-  ogdf::randomSimpleGraph(graph_,20,20);
-
-  ogdf::GraphAttributes g_attr(graph_);
-
-  for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
-  {
-    g_attr.width(n)  = 3.0;
-    g_attr.height(n) = 3.0;
-  }
-
   ogdf::SugiyamaLayout sl;
 
   sl.setRanking(new ogdf::OptimalRanking);
@@ -35,10 +39,10 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
   ogdf::OptimalHierarchyLayout * ohl = new ogdf::OptimalHierarchyLayout;
 
   sl.setLayout(ohl);
-  sl.call(g_attr);
+  sl.call(g_attr_);
 
-  float width  = g_attr.boundingBox().width() / 2.0 ,
-        height = g_attr.boundingBox().height() / 2.0;
+  float width  = g_attr_.boundingBox().width() / 2.0 ,
+        height = g_attr_.boundingBox().height() / 2.0;
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
@@ -59,24 +63,19 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
     ogdf::node source = e->source(),
                target = e->target();
 
-    scm::math::vec3 pos_source(g_attr.x(source)-width,g_attr.y(source)-height,0.0),
-                   pos_target(g_attr.x(target)-width,g_attr.y(target)-height,0.0);
-
-    
-    //scm::math::vec3 pos_source(0.0,-50.0,0.0);
-    //scm::math::vec3 pos_target(0.0,50.0,0.0);
+    scm::math::vec3 pos_source(g_attr_.x(source)-width,g_attr_.y(source)-height,0.0),
+                   pos_target(g_attr_.x(target)-width,g_attr_.y(target)-height,0.0);
 
     std::vector<Vertex> v_tmp(edge_vertices(pos_source,pos_target));
     std::vector<unsigned> i_tmp(edge_indices(vertices.size()));
 
     vertices.insert(vertices.end(),v_tmp.begin(),v_tmp.end());
     indices.insert(indices.end(),i_tmp.begin(),i_tmp.end());
-   // break;
   }
 
   for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
   {
-    scm::math::vec3f center(g_attr.x(n)-width,g_attr.y(n)-height,0.0f);
+    scm::math::vec3f center(g_attr_.x(n)-width,g_attr_.y(n)-height,0.0f);
 
     std::vector<Vertex>   v_tmp(node_vertices(rings,sectors,3.0,center));
     std::vector<unsigned> i_tmp(node_indices(rings,sectors,vertices.size()));
@@ -152,10 +151,10 @@ draw(RenderContext const& ctx) const
   ctx.render_context->draw_elements(faces_ * 3);
 }
 
-void GraphRessource::
-
-ray_test(Ray const& ray,PickResult::Options options,
-         Node * owner  ,std::set<PickResult> & hits)
+void GraphRessource::ray_test(Ray const& ray,
+                              PickResult::Options options,
+                              Node * owner,
+                              std::set<PickResult> & hits)
 {}
 
 std::shared_ptr<GeometryUberShader> GraphRessource::
@@ -167,13 +166,15 @@ create_ubershader() const
 
 std::vector<Vertex> const GraphRessource::
 
-node_vertices(unsigned rings,unsigned sectors,
-                float radius,scm::math::vec3f const& center) const
+node_vertices(unsigned short rings,
+              unsigned short sectors,
+              double radius,
+              scm::math::vec3f const& center) const
 {
   std::vector<Vertex> vertices;
 
-  float const R = 1.0f / (rings - 1);
-  float const S = 1.0f / (sectors - 1);
+  double const R = 1.0f / (rings - 1);
+  double const S = 1.0f / (sectors - 1);
 
   for (unsigned r(0); r < rings; ++r)
     for (unsigned s(0); s < sectors; ++s)
@@ -201,21 +202,14 @@ edge_vertices(scm::math::vec3f const& source,
               scm::math::vec3f const& target) const
 {
   unsigned const sectors = 40;
-  float    const radius  = 0.6 , rad_increment = 2 * M_PI / sectors;
+  float    const radius  = 0.5 , rad_increment = 2 * M_PI / sectors;
 
   std::vector<Vertex> vertices;
 
   scm::math::vec3f normal(target-source);
-
-  //std::cout << "normal : " << normal;
-
   scm::math::vec3f u(normal.y,-normal.x,0.0);
-
-  //std::cout << " u : " << u << std::endl;
-
   scm::math::vec3f v(scm::math::cross(normal,u));
 
-  // std::cout << " v : " << v << std::endl;
 
   u = scm::math::normalize(u) * radius;
   v = scm::math::normalize(v) * radius;
@@ -228,15 +222,11 @@ edge_vertices(scm::math::vec3f const& source,
 
   for(double rad = 0.0 ; rad < 2.0 * M_PI ; rad += rad_increment)
   {
-    //std::cout << rad << std::endl;
-
     scm::math::vec3f pos(source);
 
     pos += u * std::cos(rad) + v * std::sin(rad);
 
     vertex.pos    = pos;
-
-    //std::cout << "vertex position : " << vertex.pos << std::endl;
 
     vertex.normal = scm::math::normalize(pos - source);
 
@@ -244,7 +234,6 @@ edge_vertices(scm::math::vec3f const& source,
 
     vertex.pos += normal;
 
-    //std::cout << "contrair position : " << vertex.pos << std::endl;
 
     vertices.push_back(vertex);
   }
@@ -256,7 +245,9 @@ edge_vertices(scm::math::vec3f const& source,
 
 std::vector<unsigned> const GraphRessource::
 
-node_indices(unsigned rings,unsigned sectors,unsigned offset) const
+node_indices(unsigned short rings,
+             unsigned short sectors,
+             unsigned short offset) const
 {
   std::vector<unsigned> indices;
 
@@ -283,16 +274,12 @@ edge_indices(unsigned offset) const
 
   unsigned const sectors = 40;
 
-  //std::cout << offset << std::endl;
-
   for(unsigned short index = offset ; index < offset + sectors * 2 - 2; ++index)
   {
-     // std::cout << "base index : " << index << std::endl;
       indices.push_back(index);
       indices.push_back(index+1);
       indices.push_back(index+2);
   }
-  //std::cout << std::endl;
 
   return indices;
 }

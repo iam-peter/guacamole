@@ -40,32 +40,40 @@ class GraphRessource : public GeometryRessource
 
   std::shared_ptr<GeometryUberShader> create_ubershader() const;
 
+
+  void generate_graph(unsigned short nodes,unsigned short edges) const;
+
+
   private:
-
-  std::vector<Vertex> const 
-  node_vertices(unsigned rings,unsigned sectors,float radius = 1.0,
-                  scm::math::vec3 const& pos = scm::math::vec3(0.0)) const;
-
-  std::vector<Vertex> const
-  edge_vertices(scm::math::vec3 const& source,
-                scm::math::vec3 const& target) const;
-
-  std::vector<unsigned> const 
-  node_indices(unsigned rings,unsigned sectors,unsigned offset = 0) const;
-
-  std::vector<unsigned> const 
-  edge_indices(unsigned offset) const;
 
   void upload_to(RenderContext const& context) const;
 
-  mutable std::vector<scm::gl::buffer_ptr> vertices_;
-  mutable std::vector<scm::gl::buffer_ptr> indices_;
-  mutable std::vector<scm::gl::vertex_array_ptr> vertex_array_;
-  mutable std::mutex upload_mutex_;
 
-  mutable unsigned faces_;
+  std::vector<Vertex> const node_vertices(unsigned short rings,
+                                          unsigned short sectors,
+                                          double radius,
+                                          scm::math::vec3 const& pos) const;
 
-  mutable ogdf::Graph graph_;
+  std::vector<Vertex> const edge_vertices(scm::math::vec3 const& source,
+                                          scm::math::vec3 const& target) const;
+
+  std::vector<unsigned> const node_indices(unsigned short rings,
+                                           unsigned short sectors,
+                                           unsigned short offset) const;
+
+  std::vector<unsigned> const edge_indices(unsigned offset) const;
+
+
+
+  mutable std::vector<scm::gl::buffer_ptr>          vertices_;
+  mutable std::vector<scm::gl::buffer_ptr>          indices_;
+  mutable std::vector<scm::gl::vertex_array_ptr>    vertex_array_;
+  mutable unsigned                                  faces_;
+
+  mutable std::mutex                                upload_mutex_;
+
+  mutable ogdf::Graph                               graph_;
+  mutable ogdf::GraphAttributes                     g_attr_;
 };
 
 }
