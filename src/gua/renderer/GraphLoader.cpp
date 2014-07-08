@@ -42,6 +42,7 @@ namespace gua
     auto graph_ressource = std::make_shared<GraphRessource>();
 
     graph_ressource->generate_graph(nodes,edges);
+    graph_ressource->layout_apply();
 
 		GeometryDatabase::instance()->add(name,graph_ressource);
 		MaterialDatabase::instance()->load_material(mat);

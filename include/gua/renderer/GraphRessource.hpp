@@ -41,6 +41,7 @@ class GraphRessource : public GeometryRessource
   std::shared_ptr<GeometryUberShader> create_ubershader() const;
 
 
+  void layout_apply() const;
   void generate_graph(unsigned short nodes,unsigned short edges) const;
 
 
@@ -48,6 +49,11 @@ class GraphRessource : public GeometryRessource
 
   void upload_to(RenderContext const& context) const;
 
+
+  void layout_correction() const;  
+
+  void create_geometry(std::vector<Vertex>   & vertices,
+                       std::vector<unsigned> & indices) const;
 
   std::vector<Vertex> const node_vertices(unsigned short rings,
                                           unsigned short sectors,
@@ -59,7 +65,7 @@ class GraphRessource : public GeometryRessource
 
   std::vector<unsigned> const node_indices(unsigned short rings,
                                            unsigned short sectors,
-                                           unsigned short offset) const;
+                                           unsigned offset) const;
 
   std::vector<unsigned> const edge_indices(unsigned offset) const;
 
