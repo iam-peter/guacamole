@@ -238,7 +238,7 @@ edge_vertices(scm::math::vec3f const& source,
               scm::math::vec3f const& target) const
 {
   unsigned const sectors = 40;
-  float    const radius  = 0.5 , rad_increment = 2 * M_PI / sectors;
+  double   const radius  = 0.5 , rad_increment = 2.0 * M_PI / sectors;
 
   std::vector<Vertex> vertices;
 
@@ -306,15 +306,13 @@ edge_indices(unsigned offset) const
 {
   std::vector<unsigned> indices;
 
-  unsigned const segments = 40;
+  unsigned short const segments = 40 , max_index = segments * 2 - 1;
 
-  for(unsigned short triangle = 0 ; triangle < segments * 2 - 2; ++triangle)
+  for(unsigned short triangle = 0 ; triangle < segments * 2 ; ++triangle)
   {
-    unsigned short index = offset + triangle;
-
-    indices.push_back(index);
-    indices.push_back(index+1);
-    indices.push_back(index+2);
+    indices.push_back(offset + triangle % max_index);
+    indices.push_back(offset + (triangle + 1) % max_index);
+    indices.push_back(offset + (triangle + 2) % max_index);
   }
 
   return indices;
