@@ -92,7 +92,8 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
                         (0,1,scm::gl::TYPE_VEC2F,sizeof(Vertex))
                         (0,2,scm::gl::TYPE_VEC3F,sizeof(Vertex))
                         (0,3,scm::gl::TYPE_VEC3F,sizeof(Vertex))
-                        (0,4,scm::gl::TYPE_VEC3F,sizeof(Vertex)),
+                        (0,4,scm::gl::TYPE_VEC3F,sizeof(Vertex))
+                        (0,5,scm::gl::TYPE_VEC3F,sizeof(Vertex)),
                         buffer_arrays);
 }
 
@@ -186,7 +187,7 @@ create_geometry(std::vector<Vertex>   & vertices,
 
   for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
   {
-    scm::math::vec3f center(g_attr_.x(n),g_attr_.y(n),0.0f);
+    scm::math::vec3 center(g_attr_.x(n),g_attr_.y(n),0.0f);
 
     std::vector<Vertex>   v_tmp(node_vertices(rings,sectors,3.0,center));
     std::vector<unsigned> i_tmp(node_indices(rings,sectors,vertices.size()));
@@ -204,7 +205,7 @@ std::vector<Vertex> const GraphRessource::
 node_vertices(unsigned short rings,
               unsigned short sectors,
               double radius,
-              scm::math::vec3f const& center) const
+              scm::math::vec3 const& center) const
 {
   std::vector<Vertex> vertices;
 
@@ -219,11 +220,12 @@ node_vertices(unsigned short rings,
       float y = std::sin(-M_PI_2 + M_PI * r * R);
       float z = std::sin(2 * M_PI * s * S) * std::sin(M_PI * r * R);
 
-      tmp.pos       = center + scm::math::vec3f(x,y,z) * radius;
-      tmp.normal    = scm::math::vec3f(x,y,z);
+      tmp.pos       = center + scm::math::vec3(x,y,z) * radius;
+      tmp.normal    = scm::math::vec3(x,y,z);
       tmp.tex       = scm::math::vec2f(0.f, 0.f);
       tmp.tangent   = scm::math::vec3f(0.f, 0.f, 0.f);
       tmp.bitangent = scm::math::vec3f(0.f, 0.f, 0.f);
+      tmp.color     = scm::math::vec3f(0.0f,0.0f,0.9f);
       
       vertices.push_back(tmp);
     }
@@ -234,17 +236,23 @@ node_vertices(unsigned short rings,
 
 std::vector<Vertex> const GraphRessource::
 
-edge_vertices(scm::math::vec3f const& source,
-              scm::math::vec3f const& target) const
+edge_vertices(scm::math::vec3 const& source,
+              scm::math::vec3 const& target) const
 {
-  unsigned const sectors = 40;
-  double   const radius  = 0.5 , rad_increment = 2.0 * M_PI / sectors;
+  unsigned const sectors = 100;
+  double   const radius  = 0.6 , rad_increment = 2.0 * M_PI / sectors;
 
   std::vector<Vertex> vertices;
 
-  scm::math::vec3f normal(target-source);
-  scm::math::vec3f u(normal.y,-normal.x,0.0);
-  scm::math::vec3f v(scm::math::cross(normal,u));
+  scm::math::vec3 normal(target-source);
+
+  if(scm::math::length(normal) == 0.0) return vertices;
+
+  scm::math::vec3 u(normal.z,normal.x,normal.y);
+
+  u = scm::math::cross(normal,u);
+
+  scm::math::vec3 v(scm::math::cross(normal,u));
 
   u = scm::math::normalize(u) * radius;
   v = scm::math::normalize(v) * radius;
@@ -254,10 +262,11 @@ edge_vertices(scm::math::vec3f const& source,
   vertex.tex       = scm::math::vec2f(0.f,0.f);
   vertex.tangent   = scm::math::vec3f(0.f,0.f,0.f);
   vertex.bitangent = scm::math::vec3f(0.f,0.f,0.f); 
+  vertex.color     = scm::math::vec3f(0.0f,0.0f,0.6f);
 
   for(double rad = 0.0 ; rad < 2.0 * M_PI ; rad += rad_increment)
   {
-    scm::math::vec3f pos(source);
+    scm::math::vec3 pos(source);
 
     pos += u * std::cos(rad) + v * std::sin(rad);
 
@@ -306,7 +315,7 @@ edge_indices(unsigned offset) const
 {
   std::vector<unsigned> indices;
 
-  unsigned short const segments = 40 , max_index = segments * 2 - 1;
+  unsigned short const segments = 100 , max_index = segments * 2 - 1;
 
   for(unsigned short triangle = 0 ; triangle < segments * 2 ; ++triangle)
   {

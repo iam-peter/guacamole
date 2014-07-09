@@ -27,6 +27,7 @@ layout(location=1) in vec2 gua_in_texcoords;
 layout(location=2) in vec3 gua_in_normal;
 layout(location=3) in vec3 gua_in_tangent;
 layout(location=4) in vec3 gua_in_bitangent;
+layout(location=5) in vec3 gua_in_color;
 
 // uniforms
 @include "shaders/uber_shaders/common/gua_camera_uniforms.glsl"
@@ -43,6 +44,7 @@ uniform int  gua_shadow_quality;
 
 // outputs ---------------------------------------------------------------------
 out vec3 gua_position_varying;
+out vec3 gua_object_color;
 
 @output_definition
 
@@ -87,10 +89,11 @@ void main() {
 
     gua_texcoords = gua_in_texcoords;
 
-    gua_object_normal =     gua_in_normal;
-    gua_object_tangent =    gua_in_tangent;
-    gua_object_bitangent =  gua_in_bitangent;
-    gua_object_position =   gua_in_position;
+    gua_object_normal    = gua_in_normal;
+    gua_object_tangent   = gua_in_tangent;
+    gua_object_bitangent = gua_in_bitangent;
+    gua_object_position  = gua_in_position;
+    gua_object_color     = gua_in_color;
 
     gua_world_normal =      normalize((gua_normal_matrix * vec4(gua_in_normal, 0.0)).xyz);
     gua_world_tangent =     normalize((gua_normal_matrix * vec4(gua_in_tangent, 0.0)).xyz);

@@ -23,6 +23,7 @@
 
 // input from vertex shader ----------------------------------------------------
 in vec3 gua_position_varying;
+in vec3 gua_object_color;
 @input_definition
 
 // uniforms
@@ -78,7 +79,8 @@ void gua_clip_against_global_clipping_plane() {
 @material_methods
 
 // main ------------------------------------------------------------------------
-void main() {
+void main() 
+{
   gua_clip_against_global_clipping_plane();
 
   gl_FragDepth = gl_FragCoord.z;

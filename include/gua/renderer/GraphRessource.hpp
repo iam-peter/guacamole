@@ -20,6 +20,7 @@ struct Vertex
   scm::math::vec3 normal;
   scm::math::vec3 tangent;
   scm::math::vec3 bitangent;
+  scm::math::vec3 color;
 };
 
 namespace gua
