@@ -23,6 +23,7 @@
 #define GUA_INFOVIS_LOADER_HPP
 
 // guacamole headers
+#include <gua/renderer/AreaChartRessource.hpp>
 #include <gua/renderer/LineChartRessource.hpp>
 #include <gua/renderer/ScatterPlotRessource.hpp>
 #include <gua/renderer/GeometryLoader.hpp>
@@ -74,6 +75,13 @@ public:
   );
 
    std::shared_ptr<node::Node> create_linechart(
+      std::string const& node_name
+    , std::string const& material
+    , std::vector<float> const& xdata
+    , std::vector<float> const& ydata
+  );
+
+   std::shared_ptr<node::Node> create_areachart(
       std::string const& node_name
     , std::string const& material
     , std::vector<float> const& xdata

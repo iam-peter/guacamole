@@ -27,6 +27,7 @@
 #include <gua/utils/TextFile.hpp>
 #include <gua/utils/Logger.hpp>
 #include <gua/utils/string_utils.hpp>
+#include <gua/node/AreaChartNode.hpp>
 #include <gua/node/LineChartNode.hpp>
 #include <gua/node/ScatterPlotNode.hpp>
 #include <gua/node/TransformNode.hpp>
@@ -79,6 +80,20 @@ std::shared_ptr<node::Node> InfoVisLoader::create_linechart(
   GeometryDatabase::instance()->add(node_name, std::make_shared<LineChartRessource>(xdata, ydata));
 
   return std::make_shared<node::LineChartNode>(node_name, node_name, material);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<node::Node> InfoVisLoader::create_areachart(
+    std::string const& node_name
+  , std::string const& material
+  , std::vector<float> const& xdata
+  , std::vector<float> const& ydata
+  )
+{
+  GeometryDatabase::instance()->add(node_name, std::make_shared<AreaChartRessource>(xdata, ydata));
+
+  return std::make_shared<node::AreaChartNode>(node_name, node_name, material);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
