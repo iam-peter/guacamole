@@ -40,7 +40,7 @@ namespace gua {
 
     // VERTEX SHADER -------------------------------------------------------------
     std::string vertex_shader(
-      Resources::lookup_shader(Resources::shaders_uber_shaders_gbuffer_mesh_mesh_vert)
+      Resources::lookup_shader(Resources::shaders_uber_shaders_gbuffer_line_chart_line_chart_vert)
       );
 
     // material specific uniforms
@@ -61,7 +61,7 @@ namespace gua {
 
     // FRAGMENT SHADER -----------------------------------------------------------
     std::string fragment_shader(
-      Resources::lookup_shader(Resources::shaders_uber_shaders_gbuffer_mesh_mesh_frag)
+      Resources::lookup_shader(Resources::shaders_uber_shaders_gbuffer_line_chart_line_chart_frag)
       );
 
     // input from vertex shader
