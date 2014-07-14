@@ -56,8 +56,6 @@ AreaChartRessource::AreaChartRessource(
   , ydata_(ydata) {
 
   num_points_ = std::min(xdata_.size(), ydata_.size());
-
-  // each line segment has 4 faces of 2 triangles plus two faces at the sides
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -84,15 +82,27 @@ void AreaChartRessource::upload_to(RenderContext const& ctx) const
   Vertex* data(static_cast<Vertex*>(ctx.render_context->map_buffer(
       vertices_[ctx.id], scm::gl::ACCESS_WRITE_INVALIDATE_BUFFER)));
 
+  // retrieve min and max values to center the area chart
+  float ymin = *std::min_element(ydata_.begin(), ydata_.end());
+  float xmin = *std::min_element(xdata_.begin(), xdata_.end());
+  float ymax = *std::max_element(ydata_.begin(), ydata_.end());
+  float xmax = *std::max_element(xdata_.begin(), xdata_.end());
+
+  float base = -0.5f * (ymax - ymin) + std::min(0.0f, ymin);
+
   // create triangles for every segment
   for (unsigned int i(0); i < num_points_; ++i)
   {
-    // position of data point at the baseline (0)
-    data[i * 2].pos = scm::math::vec3f(xdata_[i], 0.0f, 0.0f);
+    float x = -0.5f * (xmax - xmin) + xdata_[i];
+    float y = -0.5f * (ymax - ymin) + ydata_[i];
+
+
+    // actual data point position
+    data[i * 2].pos = scm::math::vec3f(x, y, 0.0f);
     data[i * 2].normal = scm::math::vec3f(0.0f, 0.0f, 1.0f);
 
-    // actual position of data value
-    data[i * 2 + 1].pos = scm::math::vec3f(xdata_[i], ydata_[i], 0.0f);
+    // data point at baseline height
+    data[i * 2 + 1].pos = scm::math::vec3f(x, base, 0.0f);
     data[i * 2 + 1].normal = scm::math::vec3f(0.0f, 0.0f, 1.0f);
   }
 
@@ -144,7 +154,7 @@ void AreaChartRessource::draw(RenderContext const& ctx) const {
 
     ctx.render_context->bind_vertex_array(vertex_array_[ctx.id]);
     ctx.render_context->bind_index_buffer(
-        indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_LIST, scm::gl::TYPE_UINT);
+        indices_[ctx.id], scm::gl::PRIMITIVE_TRIANGLE_STRIP, scm::gl::TYPE_UINT);
     ctx.render_context->apply();
     ctx.render_context->draw_elements(num_points_ * 2);
   }
