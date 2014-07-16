@@ -89,11 +89,8 @@ void GraphRessource::upload_to(RenderContext const& ctx) const
   ctx.render_device->create_vertex_array(
   
   scm::gl::vertex_format(0,0,scm::gl::TYPE_VEC3F,sizeof(Vertex))
-                        (0,1,scm::gl::TYPE_VEC2F,sizeof(Vertex))
-                        (0,2,scm::gl::TYPE_VEC3F,sizeof(Vertex))
-                        (0,3,scm::gl::TYPE_VEC3F,sizeof(Vertex))
-                        (0,4,scm::gl::TYPE_VEC3F,sizeof(Vertex))
-                        (0,5,scm::gl::TYPE_VEC3F,sizeof(Vertex)),
+                        (0,1,scm::gl::TYPE_VEC3F,sizeof(Vertex))
+                        (0,2,scm::gl::TYPE_VEC3F,sizeof(Vertex)),
                         buffer_arrays);
 }
 
@@ -152,7 +149,6 @@ generate_graph(unsigned short nodes,unsigned short edges) const
 {
   ogdf::randomSimpleGraph(graph_,nodes,edges);
 
-  //g_attr_.init(graph_,g_attr_.attributes());
   g_attr_ = ogdf::GraphAttributes(graph_);
 
   for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
@@ -222,10 +218,7 @@ node_vertices(unsigned short rings,
 
       tmp.pos       = center + scm::math::vec3(x,y,z) * radius;
       tmp.normal    = scm::math::vec3(x,y,z);
-      tmp.tex       = scm::math::vec2f(0.f, 0.f);
-      tmp.tangent   = scm::math::vec3f(0.f, 0.f, 0.f);
-      tmp.bitangent = scm::math::vec3f(0.f, 0.f, 0.f);
-      tmp.color     = scm::math::vec3f(0.0f,0.0f,0.9f);
+      tmp.color     = scm::math::vec3f(0.3f,0.0f,0.9f);
       
       vertices.push_back(tmp);
     }
@@ -259,10 +252,7 @@ edge_vertices(scm::math::vec3 const& source,
 
   Vertex vertex;
 
-  vertex.tex       = scm::math::vec2f(0.f,0.f);
-  vertex.tangent   = scm::math::vec3f(0.f,0.f,0.f);
-  vertex.bitangent = scm::math::vec3f(0.f,0.f,0.f); 
-  vertex.color     = scm::math::vec3f(0.0f,0.0f,0.6f);
+  vertex.color     = scm::math::vec3f(0.6f,0.6f,0.6f);
 
   for(double rad = 0.0 ; rad < 2.0 * M_PI ; rad += rad_increment)
   {

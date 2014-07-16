@@ -16,10 +16,7 @@
 struct Vertex
 {
   scm::math::vec3 pos;
-  scm::math::vec2 tex;
   scm::math::vec3 normal;
-  scm::math::vec3 tangent;
-  scm::math::vec3 bitangent;
   scm::math::vec3 color;
 };
 

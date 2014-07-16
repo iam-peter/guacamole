@@ -43,6 +43,8 @@ uniform int  gua_shadow_quality;
 // outputs ---------------------------------------------------------------------
 @output_definition
 
+vec3 color;
+
 // methods ---------------------------------------------------------------------
 
 // global gua_* methods

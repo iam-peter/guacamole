@@ -23,11 +23,8 @@
 
 // input -----------------------------------------------------------------------
 layout(location=0) in vec3 gua_in_position;
-layout(location=1) in vec2 gua_in_texcoords;
-layout(location=2) in vec3 gua_in_normal;
-layout(location=3) in vec3 gua_in_tangent;
-layout(location=4) in vec3 gua_in_bitangent;
-layout(location=5) in vec3 gua_in_color;
+layout(location=1) in vec3 gua_in_normal;
+layout(location=2) in vec3 gua_in_color;
 
 // uniforms
 @include "shaders/uber_shaders/common/gua_camera_uniforms.glsl"
@@ -53,14 +50,9 @@ vec2 gua_texcoords;
 
 vec3 gua_world_normal;
 vec3 gua_world_position;
-vec3 gua_world_tangent;
-vec3 gua_world_bitangent;
 
 vec3 gua_object_normal;
 vec3 gua_object_position;
-vec2 gua_object_texcoords;
-vec3 gua_object_tangent;
-vec3 gua_object_bitangent;
 
 // methods ---------------------------------------------------------------------
 
@@ -87,17 +79,11 @@ void main() {
   } else {
     gua_position_varying = vec3(0);
 
-    gua_texcoords = gua_in_texcoords;
-
     gua_object_normal    = gua_in_normal;
-    gua_object_tangent   = gua_in_tangent;
-    gua_object_bitangent = gua_in_bitangent;
     gua_object_position  = gua_in_position;
     gua_object_color     = gua_in_color;
 
     gua_world_normal =      normalize((gua_normal_matrix * vec4(gua_in_normal, 0.0)).xyz);
-    gua_world_tangent =     normalize((gua_normal_matrix * vec4(gua_in_tangent, 0.0)).xyz);
-    gua_world_bitangent =   normalize((gua_normal_matrix * vec4(gua_in_bitangent, 0.0)).xyz);
     gua_world_position =    (gua_model_matrix * vec4(gua_in_position, 1.0)).xyz;
 
     // big switch, one case for each material
