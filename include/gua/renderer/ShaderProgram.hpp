@@ -94,6 +94,10 @@ class GUA_DLL ShaderProgram {
   void create_from_sources(std::string const& v_shader_source,
                            std::string const& f_shader_source);
 
+  void create_from_sources(std::string const& v_shader_source,
+                           std::string const& g_shader_source,
+                           std::string const& f_shader_source);
+
   /**
    *
    */
