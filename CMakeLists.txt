@@ -59,6 +59,7 @@ include(FindSchism)
 include(FindBoost)
 include(FindZMQ)
 include(FindOGDF)
+include(find_igraph)
 
 if (UNIX)
 	set (BULLET_ROOT "/opt/bullet/default" CACHE PATH "Set to your bullet install path.")
@@ -85,6 +86,7 @@ set(LIB_PATHS
     ${SCHISM_LIBRARY_DIRS}
     ${ZMQ_LIBRARY_DIRS}
     ${OGDF_LIBRARY_DIR}
+    ${IGRAPH_LIBRARY_DIR}
 )
 
 set(INCLUDE_PATHS
@@ -99,6 +101,7 @@ set(INCLUDE_PATHS
     ${BULLET_INCLUDE_DIRS}
     ${ZMQ_INCLUDE_DIRS}
     ${OGDF_INCLUDE_DIR}
+    ${IGRAPH_LIBRARY_DIR}
 )
 
 LIST(APPEND LIB_PATHS ${PBR_LIBRARY_DIRS})
@@ -269,4 +272,10 @@ message(STATUS " OGDF:" )
 message(STATUS "   library: OGDF,COIN" )
 message(STATUS "   library path: ${OGDF_LIBRARY_DIR}" )
 message(STATUS "   include: ${OGDF_INCLUDE_DIR}" )
+message(STATUS "" )
+message(STATUS "" )
+message(STATUS " IGRAPH:" )
+message(STATUS "   library: IGRAPH" )
+message(STATUS "   library path: ${IGRAPH_LIBRARY_DIR}" )
+message(STATUS "   include: ${IGRAPH_INCLUDE_DIR}" )
 message(STATUS "" )

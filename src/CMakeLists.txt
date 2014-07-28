@@ -164,7 +164,7 @@ TARGET_LINK_LIBRARIES( guacamole optimized ${BULLET_MATH_LIBRARY})
 TARGET_LINK_LIBRARIES( guacamole optimized ${BULLET_HACD_LIBRARY})
 TARGET_LINK_LIBRARIES( guacamole optimized OGDF)
 TARGET_LINK_LIBRARIES( guacamole optimized COIN)
-TARGET_LINK_LIBRARIES( guacamole optimized pthread)
+TARGET_LINK_LIBRARIES( guacamole optimized IGRAPH)
 
 # link debug libraries
 TARGET_LINK_LIBRARIES( guacamole debug ${JSON_LIBRARY_DEBUG})
