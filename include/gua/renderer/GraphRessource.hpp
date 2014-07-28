@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <ogdf/basic/GraphAttributes.h>
+#include <igraph/igraph.h>
 
 struct Vertex
 {
@@ -28,6 +29,7 @@ class GraphRessource : public GeometryRessource
   public:
 
   GraphRessource();
+  ~GraphRessource();
 
   void draw(RenderContext const& context) const;
 
@@ -68,6 +70,11 @@ class GraphRessource : public GeometryRessource
   std::vector<unsigned> const edge_indices(unsigned offset) const;
 
 
+  // test_case
+
+  void layout_3D() const;
+
+  //
 
   mutable std::vector<scm::gl::buffer_ptr>          vertices_;
   mutable std::vector<scm::gl::buffer_ptr>          indices_;
@@ -76,8 +83,13 @@ class GraphRessource : public GeometryRessource
 
   mutable std::mutex                                upload_mutex_;
 
+  bool                                              third_dimension_;
+
   mutable ogdf::Graph                               graph_;
   mutable ogdf::GraphAttributes                     g_attr_;
+
+  mutable igraph_t *                                graph_3D_;
+  mutable igraph_matrix_t *                         coordinates_;
 };
 
 }

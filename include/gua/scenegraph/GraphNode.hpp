@@ -26,8 +26,6 @@
 // guacamole headers
 #include <gua/scenegraph/GeometryNode.hpp>
 
-
-
 namespace gua
 {
 

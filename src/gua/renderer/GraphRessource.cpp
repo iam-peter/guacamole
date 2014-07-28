@@ -12,8 +12,30 @@ namespace gua
 
 GraphRessource::
 
-GraphRessource()
-{}
+GraphRessource() :
+third_dimension_(true)
+{
+  if(third_dimension_)
+  {
+    graph_3D_ = new igraph_t();
+    igraph_empty(graph_3D_,0,IGRAPH_UNDIRECTED);
+    coordinates_ = new igraph_matrix_t();
+  }
+}
+
+
+GraphRessource::
+
+~GraphRessource()
+{
+  if(third_dimension_)
+  {
+    igraph_destroy(graph_3D_);
+    igraph_matrix_destroy(coordinates_);
+    delete(graph_3D_);
+    delete(coordinates_);
+  }
+}
 
 
 void GraphRessource::
@@ -114,15 +136,23 @@ void GraphRessource::
 
 layout_apply() const
 {
-  ogdf::SugiyamaLayout sl;
+  if(!third_dimension_)
+  {
+    ogdf::SugiyamaLayout sl;
 
-  sl.setRanking(new ogdf::OptimalRanking);
-  sl.setCrossMin(new ogdf::MedianHeuristic);
+    sl.setRanking(new ogdf::OptimalRanking);
+    sl.setCrossMin(new ogdf::MedianHeuristic);
 
-  ogdf::OptimalHierarchyLayout * ohl = new ogdf::OptimalHierarchyLayout;
+    ogdf::OptimalHierarchyLayout * ohl = new ogdf::OptimalHierarchyLayout;
 
-  sl.setLayout(ohl);
-  sl.call(g_attr_);
+    sl.setLayout(ohl);
+    sl.call(g_attr_);
+  }
+
+  else
+  {
+    layout_3D();
+  }
 
   layout_correction();
 }
@@ -132,13 +162,33 @@ void GraphRessource::
 
 layout_correction() const
 {
-  double x_shift = g_attr_.boundingBox().width()  / 1.5,
-         y_shift = g_attr_.boundingBox().height() / 1.5;
-
-  for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
+  if(!third_dimension_)
   {
-    g_attr_.x(n) -= x_shift;
-    g_attr_.y(n) -= y_shift;
+    double x_shift = g_attr_.boundingBox().width()  / 1.5,
+           y_shift = g_attr_.boundingBox().height() / 1.5;
+
+    for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
+    {
+      g_attr_.x(n) -= x_shift;
+      g_attr_.y(n) -= y_shift;
+    }
+  }
+
+  else
+  {
+    for(unsigned row = 0 ; row < igraph_matrix_nrow(coordinates_) ; ++row)
+    {
+      igraph_vector_t * node = new igraph_vector_t;
+      igraph_vector_init(node,3);
+      igraph_matrix_get_row(coordinates_,node,row);
+
+      for(unsigned dim = 0 ; dim < 3 ; ++dim)
+      {
+        float pos = igraph_vector_e(node,dim) * graph_.numberOfNodes() * 2.0f;
+
+        igraph_matrix_set(coordinates_,row,dim,pos);
+      }
+    }    
   }  
 }
 
@@ -171,8 +221,33 @@ create_geometry(std::vector<Vertex>   & vertices,
     ogdf::node source = e->source(),
                target = e->target();
 
-    scm::math::vec3 pos_source(g_attr_.x(source),g_attr_.y(source),0.0),
-                    pos_target(g_attr_.x(target),g_attr_.y(target),0.0);
+    scm::math::vec3 pos_source,pos_target;
+
+    if(!third_dimension_)
+    {
+      pos_source = scm::math::vec3(g_attr_.x(source),g_attr_.y(source),0.0);
+      pos_target = scm::math::vec3(g_attr_.x(target),g_attr_.y(target),0.0);
+    }
+
+    else
+    {
+      igraph_vector_t * ps = new igraph_vector_t() , 
+                      * pt = new igraph_vector_t();
+
+      igraph_vector_init(ps,3);
+      igraph_vector_init(pt,3);
+
+      igraph_matrix_get_row(coordinates_,ps,source->index());
+      igraph_matrix_get_row(coordinates_,pt,target->index());
+
+      pos_source = scm::math::vec3(igraph_vector_e(ps,0),
+                                   igraph_vector_e(ps,1),
+                                   igraph_vector_e(ps,2));
+
+      pos_target = scm::math::vec3(igraph_vector_e(pt,0),
+                                   igraph_vector_e(pt,1),
+                                   igraph_vector_e(pt,2));
+    }
 
     std::vector<Vertex> v_tmp(edge_vertices(pos_source,pos_target));
     std::vector<unsigned> i_tmp(edge_indices(vertices.size()));
@@ -183,10 +258,26 @@ create_geometry(std::vector<Vertex>   & vertices,
 
   for(ogdf::node n = graph_.firstNode() ; n ; n = n->succ())
   {
-    scm::math::vec3 center(g_attr_.x(n),g_attr_.y(n),0.0f);
+    scm::math::vec3 center;
+
+    if(!third_dimension_)
+    {
+      center = scm::math::vec3(g_attr_.x(n),g_attr_.y(n),0.0f);
+    }
+
+    else
+    {
+      igraph_vector_t * c = new igraph_vector_t;
+      igraph_vector_init(c,3);
+      igraph_matrix_get_row(coordinates_,c,n->index());
+
+      center = scm::math::vec3(igraph_vector_e(c,0),
+                               igraph_vector_e(c,1),
+                               igraph_vector_e(c,2));
+    }
 
     std::vector<Vertex>   v_tmp(node_vertices(rings,sectors,3.0,center));
-    std::vector<unsigned> i_tmp(node_indices(rings,sectors,vertices.size()));
+    std::vector<unsigned> i_tmp(node_indices (rings,sectors,vertices.size()));
 
     vertices.insert(vertices.end(),v_tmp.begin(),v_tmp.end());
     indices.insert(indices.end(),i_tmp.begin(),i_tmp.end());
@@ -208,7 +299,13 @@ node_vertices(unsigned short rings,
   double const R = 1.0 / (rings - 1);
   double const S = 1.0 / (sectors - 1);
 
+  scm::math::vec3 const bottom_color(1.0f,0.55f,0.0f),
+                           top_color(1.0f,0.55f,0.0f);
+
+  float weight = 0.0f , weight_increment = 1.0 / (rings - 1);
+
   for (unsigned r(0); r < rings; ++r)
+  {
     for (unsigned s(0); s < sectors; ++s)
     {
       Vertex tmp;
@@ -218,10 +315,13 @@ node_vertices(unsigned short rings,
 
       tmp.pos       = center + scm::math::vec3(x,y,z) * radius;
       tmp.normal    = scm::math::vec3(x,y,z);
-      tmp.color     = scm::math::vec3f(0.3f,0.0f,0.9f);
+      tmp.color     = bottom_color * (1.0 - weight) + top_color * weight;
       
       vertices.push_back(tmp);
     }
+
+    weight += weight_increment;
+  }
 
   return vertices;
 }
@@ -232,8 +332,8 @@ std::vector<Vertex> const GraphRessource::
 edge_vertices(scm::math::vec3 const& source,
               scm::math::vec3 const& target) const
 {
-  unsigned const sectors = 100;
-  double   const radius  = 0.6 , rad_increment = 2.0 * M_PI / sectors;
+  unsigned const segments = 40;
+  double   const radius   = 0.6 , rad_increment = 2.0 * M_PI / segments;
 
   std::vector<Vertex> vertices;
 
@@ -241,9 +341,12 @@ edge_vertices(scm::math::vec3 const& source,
 
   if(scm::math::length(normal) == 0.0) return vertices;
 
-  scm::math::vec3 u(normal.z,normal.x,normal.y);
 
-  u = scm::math::cross(normal,u);
+  scm::math::vec3 u;
+
+  if(normal.x == 0.0 && normal.y == 0.0) u = scm::math::vec3(1.0,0.0,0.0);
+
+  else u = cross(normal,scm::math::vec3(0.0,0.0,1.0));
 
   scm::math::vec3 v(scm::math::cross(normal,u));
 
@@ -252,7 +355,8 @@ edge_vertices(scm::math::vec3 const& source,
 
   Vertex vertex;
 
-  vertex.color     = scm::math::vec3f(0.6f,0.6f,0.6f);
+  scm::math::vec3 const source_color(0.4f,0.0f,0.0f),
+                        target_color(0.4f,0.0f,0.0f);  
 
   for(double rad = 0.0 ; rad < 2.0 * M_PI ; rad += rad_increment)
   {
@@ -261,13 +365,12 @@ edge_vertices(scm::math::vec3 const& source,
     pos += u * std::cos(rad) + v * std::sin(rad);
 
     vertex.pos    = pos;
-
     vertex.normal = scm::math::normalize(pos - source);
-
+    vertex.color  = source_color;
     vertices.push_back(vertex);
 
-    vertex.pos += normal;
-
+    vertex.pos  += normal;
+    vertex.color = target_color;
     vertices.push_back(vertex);
   }
 
@@ -305,7 +408,7 @@ edge_indices(unsigned offset) const
 {
   std::vector<unsigned> indices;
 
-  unsigned short const segments = 100 , max_index = segments * 2 - 1;
+  unsigned short const segments = 40 , max_index = segments * 2;
 
   for(unsigned short triangle = 0 ; triangle < segments * 2 ; ++triangle)
   {
@@ -316,6 +419,27 @@ edge_indices(unsigned offset) const
 
   return indices;
 }
+
+// test_case
+
+void GraphRessource::layout_3D() const
+{
+  igraph_add_vertices(graph_3D_,graph_.numberOfNodes(),nullptr);
+
+  for(ogdf::edge e = graph_.firstEdge() ; e ; e = e->succ())
+  {
+    ogdf::node source = e->source(),
+               target = e->target();
+
+    igraph_add_edge(graph_3D_,source->index(),target->index());
+  }
+
+  igraph_matrix_init(coordinates_,graph_.numberOfNodes(),3);
+
+  igraph_layout_sphere(graph_3D_,coordinates_);
+}
+
+//
 
 }
 
