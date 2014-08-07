@@ -29,6 +29,7 @@
 #include <gua/utils/string_utils.hpp>
 #include <gua/node/AreaChartNode.hpp>
 #include <gua/node/LineChartNode.hpp>
+#include <gua/node/PolyLineNode.hpp>
 #include <gua/node/ScatterPlotNode.hpp>
 #include <gua/node/TransformNode.hpp>
 #include <gua/renderer/Material.hpp>
@@ -94,6 +95,20 @@ std::shared_ptr<node::Node> InfoVisLoader::create_areachart(
   GeometryDatabase::instance()->add(node_name, std::make_shared<AreaChartRessource>(xdata, ydata));
 
   return std::make_shared<node::AreaChartNode>(node_name, node_name, material);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<node::Node> InfoVisLoader::create_polyline(
+    std::string const& node_name
+  , std::string const& material
+  , std::vector<math::vec3> const& points
+  , bool connect_end_points
+  )
+{
+  GeometryDatabase::instance()->add(node_name, std::make_shared<PolyLineRessource>(points, connect_end_points));
+
+  return std::make_shared<node::PolyLineNode>(node_name, node_name, material);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

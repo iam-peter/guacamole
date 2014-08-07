@@ -25,10 +25,12 @@
 // guacamole headers
 #include <gua/renderer/AreaChartRessource.hpp>
 #include <gua/renderer/LineChartRessource.hpp>
+#include <gua/renderer/PolyLineRessource.hpp>
 #include <gua/renderer/ScatterPlotRessource.hpp>
 #include <gua/renderer/GeometryLoader.hpp>
 #include <gua/scenegraph/SceneGraph.hpp>
 #include <gua/utils/DataSet.hpp>
+#include <gua/math/math.hpp>
 
 
 // external headers
@@ -86,6 +88,13 @@ public:
     , std::string const& material
     , std::vector<float> const& xdata
     , std::vector<float> const& ydata
+  );
+
+   std::shared_ptr<node::Node> create_polyline(
+      std::string const& node_name
+    , std::string const& material
+    , std::vector<math::vec3> const& points
+    , bool connect_end_points = false
   );
   /**
   *
