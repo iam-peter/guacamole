@@ -44,10 +44,10 @@ class GUA_DLL LineChartNode : public GeometryNode {
   /**
   * Implements ray picking for a triangular mesh
   */
-  /* virtual */ void ray_test_impl(RayNode const& ray,
-                                   PickResult::Options options,
-                                   Mask const& mask,
-                                   std::set<PickResult>& hits);
+  /* virtual */ void ray_test_impl( Ray const& ray,
+                                    PickResult::Options options,
+                                    Mask const& mask,
+                                    std::set<PickResult>& hits);
 
   /* virtual */ void update_cache();
 
