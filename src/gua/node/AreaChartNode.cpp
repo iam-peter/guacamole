@@ -41,14 +41,14 @@ namespace node {
 
   ////////////////////////////////////////////////////////////////////////////////
 
-  void AreaChartNode::ray_test_impl(RayNode const& ray, PickResult::Options options,
-    Mask const& mask, std::set<PickResult>& hits) {
+  void AreaChartNode::ray_test_impl(Ray const& ray, PickResult::Options options,
+  Mask const& mask, std::set<PickResult>& hits) {
 
     // first of all, check bbox
-    auto box_hits(ray.intersect(bounding_box_));
+    auto box_hits(::gua::intersect(ray, bounding_box_));
 
     // ray did not intersect bbox -- therefore it wont intersect
-    if (box_hits.first == RayNode::END && box_hits.second == RayNode::END) {
+    if (box_hits.first == Ray::END && box_hits.second == Ray::END) {
       return;
     }
 
@@ -79,6 +79,9 @@ namespace node {
         if (has_children()) {
           auto geometry_bbox(geometry->get_bounding_box());
 
+#if 0
+          auto inner_bbox = gua::math::transform(geometry_bbox, world_transform);
+#else
           math::BoundingBox<math::vec3> inner_bbox;
           inner_bbox.expandBy(world_transform * geometry_bbox.min);
           inner_bbox.expandBy(world_transform * geometry_bbox.max);
@@ -106,15 +109,16 @@ namespace node {
             math::vec3(geometry_bbox.max.x,
             geometry_bbox.min.y,
             geometry_bbox.min.z));
+#endif
 
-          auto inner_hits(ray.intersect(inner_bbox));
+          auto inner_hits(::gua::intersect(ray, inner_bbox));
           if (inner_hits.first == RayNode::END &&
             inner_hits.second == RayNode::END)
             check_kd_tree = false;
         }
 
         if (check_kd_tree) {
-          Ray world_ray(ray.get_world_ray());
+          Ray world_ray(ray);
 
           math::mat4 ori_transform(scm::math::inverse(world_transform));
 
