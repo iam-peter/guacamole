@@ -51,6 +51,7 @@ PolyLineRessource::PolyLineRessource(
   , vertex_array_()
   , upload_mutex_()
   , points_(points)
+  , connect_end_points_(connect_end_points)
   , num_indices_(points.size()) {
 
   for (math::vec3 point: points_)
