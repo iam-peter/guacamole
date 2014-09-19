@@ -81,7 +81,7 @@ AreaChartRessource::AreaChartRessource(
 
 void AreaChartRessource::upload_to(RenderContext const& ctx) const
 {
-  rasterizer_state_ = ctx.render_device->create_rasterizer_state(scm::gl::FILL_SOLID, scm::gl::CULL_BACK);
+  rasterizer_state_ = ctx.render_device->create_rasterizer_state(scm::gl::FILL_SOLID, scm::gl::CULL_FRONT);
 
   std::unique_lock<std::mutex> lock(upload_mutex_);
 
@@ -166,7 +166,7 @@ void AreaChartRessource::draw(RenderContext const& ctx) const {
     //scm::gl::context_state_objects_guard contex_guard(ctx.render_context);
 
     // set line and point size
-    //ctx.render_context->set_rasterizer_state(rasterizer_state_, 1.0f, 10.0f);
+    ctx.render_context->set_rasterizer_state(rasterizer_state_, 1.0f, 1.0f);
 
     ctx.render_context->bind_vertex_array(vertex_array_[ctx.id]);
     ctx.render_context->bind_index_buffer(
